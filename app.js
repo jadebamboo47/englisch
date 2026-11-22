@@ -509,7 +509,7 @@ function roundState(){ state.round = Object.assign({n:1, b:0}, state.round || {}
 function blockText(b){
   const {L, step} = current();
   if (b === 'neu') return `✨ Neues: ${L.title} – ${STEP_NAMES[step]}`;
-  if (b === 'bunt') return `🎲 Bunt gemischt: Alltagsszenen, ${roundState().n % 2 ? 'Witze & Redewendungen' : 'eine Kurzgeschichte'}, Wiederholung`;
+  if (b === 'bunt') return roundState().n % 2 ? '🎲 Bunt gemischt: Alltagsszenen und Wiederholung' : '🎲 Bunt gemischt: Alltagsszenen, eine Kurzgeschichte, Wiederholung';
   return '🧠 Kopf-fit: ' + GAME_INFO[gameForRound()].t;
 }
 function startBlock(){
@@ -1117,17 +1117,14 @@ function rotate(key, arr, n){
 }
 function buildBunt(){
   const R = roundState(); const extra = [];
-  if (R.n % 2 === 0){
+  const withStory = R.n % 2 === 0;
+  if (withStory){
     const st = rotate('stories', STORIES2, 1)[0];
     extra.push({type:'story2', key:'st-' + st.id, st});
     st.q.forEach((x,i) => extra.push({type:'storyq', key:'st-' + st.id + i, title:st.title, q:x.q, en:x.o[x.a], answer:x.o[x.a], options:x.o.slice()}));
-  } else {
-    rotate('jokes', JOKES, 2).forEach(j => extra.push({type:'joke', key:'j-' + j.s[0], s:j.s, en:j.s[j.s.length-1], de:j.de, answer:j.o[0], options:j.o.slice()}));
-    const id = rotate('idioms', IDIOMS, 1)[0];
-    extra.push({type:'idiom', key:'id-' + id.en, en:id.en, de:id.de, answer:id.de, options:[id.de, ...id.wrong]});
   }
   const hasRev = LESSONS.some(l => state.done[l.id]);
-  const scenes = rotate('scenes', SCENES, hasRev ? 3 : 4).map(x => ({type:'scene', key:'sc-' + x.q, ctx:x.ctx, q:x.q, qde:x.qde, en:x.a, de:x.ade, answer:x.a, options:[x.a, ...x.wrong]}));
+  const scenes = rotate('scenes', SCENES, (hasRev ? 3 : 4) + (withStory ? 0 : 2)).map(x => ({type:'scene', key:'sc-' + x.q, ctx:x.ctx, q:x.q, qde:x.qde, en:x.a, de:x.ade, answer:x.a, options:[x.a, ...x.wrong]}));
   const rev = hasRev ? buildReview().filter(e => e.type !== 'order').slice(0, 3) : [];
   const q = [];
   scenes.forEach((sc,i) => { q.push(sc); if (rev[i]) q.push(rev[i]); if (i === 1) q.push(...extra); });
@@ -1416,7 +1413,7 @@ function renderSettings(){
     document.getElementById('resetArea').innerHTML = `<p style="margin:0 0 12px">Wirklich alles zurücksetzen? Die geschafften Lektionen werden gelöscht.</p>
       <div class="two"><button class="btn secondary" id="rNo">Abbrechen</button><button class="btn" style="background:var(--warm)" id="rYes">Ja, zurücksetzen</button></div>`;
     document.getElementById('rNo').onclick = renderSettings;
-    document.getElementById('rYes').onclick = () => { state.done={}; state.miss={}; delete state.cur; delete state.brain; delete state.story; play = null; run = null; posHist = []; try { localStorage.removeItem(POS_KEY); } catch(e){} save(); toast('Fortschritt zurückgesetzt – es geht wieder bei Lektion 1 los.'); go({name:'home'}); window.scrollTo(0,0); };
+    document.getElementById('rYes').onclick = () => { const KEEP = ['name','onboarded','scale','rate','voice','showDe','server','code','installHidden','noSR','placement']; const kept = {}; KEEP.forEach(k => { if (k in state) kept[k] = state[k]; }); state = Object.assign({done:{}, miss:{}}, kept); play = null; run = null; posHist = []; try { localStorage.removeItem(POS_KEY); } catch(e){} save(); toast('Fortschritt zurückgesetzt – es geht wieder bei Lektion 1 los.'); go({name:'home'}); window.scrollTo(0,0); };
   };
 }
 
