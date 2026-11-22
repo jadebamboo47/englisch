@@ -1,0 +1,772 @@
+{
+"Is it far from here?": {
+"f": "tatoeba-1054.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 1651,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I have a headache.": {
+"f": "tatoeba-1079.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 1712,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I don't feel well.": {
+"f": "tatoeba-1081.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 1717,
+"url": "http://www.manythings.org/tatoeba"
+},
+"How much is it?": {
+"f": "tatoeba-1280.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2418,
+"url": "http://www.manythings.org/tatoeba"
+},
+"How many bags do you have?": {
+"f": "tatoeba-4144.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 23683,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Is it anything serious?": {
+"f": "tatoeba-4429.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 25065,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Can I help you?": {
+"f": "tatoeba-4444.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 25095,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Could you speak more slowly, please?": {
+"f": "tatoeba-896048.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 30493,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Yes, of course.": {
+"f": "tatoeba-624574.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 30530,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Would you like some more?": {
+"f": "tatoeba-5428.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 31264,
+"url": "http://www.manythings.org/tatoeba"
+},
+"No, thank you.": {
+"f": "tatoeba-5476.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 31390,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Could you repeat that, please?": {
+"f": "tatoeba-5500.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 31476,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I was wondering if you could help me.": {
+"f": "tatoeba-340898.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 34680,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What a beautiful view!": {
+"f": "tatoeba-6253.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 36062,
+"url": "http://www.manythings.org/tatoeba"
+},
+"How long have you been learning English?": {
+"f": "tatoeba-6687.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 37624,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Where would you like to go?": {
+"f": "tatoeba-6742.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 37921,
+"url": "http://www.manythings.org/tatoeba"
+},
+"It's not my cup of tea.": {
+"f": "tatoeba-6873.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 38385,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'm just looking, thank you.": {
+"f": "tatoeba-601308.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 38407,
+"url": "http://www.manythings.org/tatoeba"
+},
+"That's too expensive.": {
+"f": "tatoeba-7695.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 42448,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What do you think about it?": {
+"f": "tatoeba-7806.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 42939,
+"url": "http://www.manythings.org/tatoeba"
+},
+"No, I don't think so.": {
+"f": "tatoeba-993312.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 51103,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Excuse me, is this seat taken?": {
+"f": "tatoeba-8560.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 51498,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Are you ready to order?": {
+"f": "tatoeba-8846.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 54369,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Thank you for inviting me.": {
+"f": "tatoeba-8857.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 54430,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I appreciate your help.": {
+"f": "tatoeba-8885.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 54512,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'll take it.": {
+"f": "tatoeba-8944.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 54925,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Is this seat taken?": {
+"f": "tatoeba-9535.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 58210,
+"url": "http://www.manythings.org/tatoeba"
+},
+"How long have you been working here?": {
+"f": "tatoeba-10098.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 61870,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I look forward to hearing from you.": {
+"f": "tatoeba-341318.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 64000,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What do you recommend?": {
+"f": "tatoeba-10709.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 65040,
+"url": "http://www.manythings.org/tatoeba"
+},
+"How long are you staying?": {
+"f": "tatoeba-10860.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 66154,
+"url": "http://www.manythings.org/tatoeba"
+},
+"It's a lovely day today.": {
+"f": "tatoeba-13453.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 242704,
+"url": "http://www.manythings.org/tatoeba"
+},
+"That's fine with me.": {
+"f": "tatoeba-16217.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 257202,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I live in a small town.": {
+"f": "tatoeba-16535.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 258639,
+"url": "http://www.manythings.org/tatoeba"
+},
+"When does the next train leave?": {
+"f": "tatoeba-17667.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 264302,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Have you been here before?": {
+"f": "tatoeba-18004.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 267057,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Do I have to change trains?": {
+"f": "tatoeba-18139.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 268384,
+"url": "http://www.manythings.org/tatoeba"
+},
+"A glass of water, please.": {
+"f": "tatoeba-18396.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 270854,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Could we have a table by the window?": {
+"f": "tatoeba-18770.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 274245,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Do you have any other questions?": {
+"f": "tatoeba-18823.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 274612,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I have a reservation.": {
+"f": "tatoeba-24628.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 324726,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Where are you from?": {
+"f": "tatoeba-29135.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 370703,
+"url": "http://www.manythings.org/tatoeba"
+},
+"It's raining cats and dogs.": {
+"f": "tatoeba-345540.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 384559,
+"url": "http://www.manythings.org/tatoeba"
+},
+"You're welcome.": {
+"f": "tatoeba-32183.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 403068,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What did the doctor say?": {
+"f": "tatoeba-32708.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 416946,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Anything else?": {
+"f": "tatoeba-34010.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 434224,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Do you have this in a bigger size?": {
+"f": "tatoeba-908408.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 434592,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Could I have the bill, please?": {
+"f": "tatoeba-34098.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 435203,
+"url": "http://www.manythings.org/tatoeba"
+},
+"How can I help you?": {
+"f": "tatoeba-34167.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 436103,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'm lost.": {
+"f": "tatoeba-35134.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 455833,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Turn left.": {
+"f": "tatoeba-35552.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 464284,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Turn right.": {
+"f": "tatoeba-35553.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 464290,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What's the problem?": {
+"f": "tatoeba-36734.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 485560,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Nice to meet you.": {
+"f": "tatoeba-38065.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 499617,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Let's call it a day.": {
+"f": "tatoeba-38275.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 503842,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Where is the train station?": {
+"f": "tatoeba-41873.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 638544,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Get well soon!": {
+"f": "tatoeba-769977.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 645644,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Where are the toilets?": {
+"f": "tatoeba-43123.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 687556,
+"url": "http://www.manythings.org/tatoeba"
+},
+"It's very hot today.": {
+"f": "tatoeba-43269.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 694423,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Let's agree to disagree.": {
+"f": "tatoeba-48301.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 913836,
+"url": "http://www.manythings.org/tatoeba"
+},
+"How much is this?": {
+"f": "tatoeba-48469.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 925040,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What can I do for you?": {
+"f": "tatoeba-57542.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 1037900,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What's your secret?": {
+"f": "tatoeba-64028.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 1112154,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What time is breakfast?": {
+"f": "tatoeba-72945.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 1477960,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Thank you very much.": {
+"f": "tatoeba-80868.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 1839560,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What happened next?": {
+"f": "tatoeba-84739.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 1886735,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What are your plans for the weekend?": {
+"f": "tatoeba-347773.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2072336,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Can I see the menu, please?": {
+"f": "tatoeba-104544.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2192189,
+"url": "http://www.manythings.org/tatoeba"
+},
+"We'll see.": {
+"f": "tatoeba-106012.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2203796,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I need a doctor.": {
+"f": "tatoeba-122546.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2280312,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I hope the weather will be good.": {
+"f": "tatoeba-130496.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2360888,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I couldn't agree more.": {
+"f": "tatoeba-139645.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2476856,
+"url": "http://www.manythings.org/tatoeba"
+},
+"These are for you.": {
+"f": "tatoeba-140224.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2505843,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'm afraid that's not good enough.": {
+"f": "tatoeba-142687.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2540552,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'm really looking forward to it.": {
+"f": "tatoeba-143005.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2540896,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'm not so sure about that.": {
+"f": "tatoeba-146181.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2544125,
+"url": "http://www.manythings.org/tatoeba"
+},
+"How was everything?": {
+"f": "tatoeba-150886.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2548869,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Can I give you a hand?": {
+"f": "tatoeba-158871.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2646645,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Here you are.": {
+"f": "tatoeba-161431.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2649240,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What seems to be the problem?": {
+"f": "tatoeba-162195.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2663374,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Your passport, please.": {
+"f": "tatoeba-349091.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2854383,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Where do I get off?": {
+"f": "tatoeba-168695.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 2860741,
+"url": "http://www.manythings.org/tatoeba"
+},
+"That reminds me of something.": {
+"f": "tatoeba-179498.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 3024015,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'd like to give it a try.": {
+"f": "tatoeba-185881.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 3152729,
+"url": "http://www.manythings.org/tatoeba"
+},
+"The shower doesn't work.": {
+"f": "tatoeba-195467.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 3256283,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Can I try it on?": {
+"f": "tatoeba-199857.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 3327445,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Can I get a refund?": {
+"f": "tatoeba-229221.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 3737736,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Is there anything else I can do for you?": {
+"f": "tatoeba-230086.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 3738809,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'm here on holiday.": {
+"f": "tatoeba-235615.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 3823809,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What would you recommend?": {
+"f": "tatoeba-243007.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 4013571,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Excuse me, can you help me?": {
+"f": "tatoeba-243920.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 4014500,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'm feeling a bit under the weather.": {
+"f": "tatoeba-285746.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 5229969,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What happens if it rains?": {
+"f": "tatoeba-662154.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 5744162,
+"url": "http://www.manythings.org/tatoeba"
+},
+"This is my first time here.": {
+"f": "tatoeba-332534.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 5851162,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I need to charge my phone.": {
+"f": "tatoeba-615080.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 6064917,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Who's calling, please?": {
+"f": "tatoeba-596014.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 6272223,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Two tickets, please.": {
+"f": "tatoeba-810733.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 6392981,
+"url": "http://www.manythings.org/tatoeba"
+},
+"It cost an arm and a leg.": {
+"f": "tatoeba-641043.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 8023182,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'm allergic to penicillin.": {
+"f": "tatoeba-696599.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 8338444,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Could you take a photo of us?": {
+"f": "tatoeba-828292.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 8724988,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Can I pay by card?": {
+"f": "tatoeba-810390.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 8758473,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Would you like a bag?": {
+"f": "tatoeba-810421.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 8863216,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Does it really make a difference?": {
+"f": "tatoeba-976257.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 8956106,
+"url": "http://www.manythings.org/tatoeba"
+},
+"You shouldn't overdo it.": {
+"f": "tatoeba-797466.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 9383895,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Would you mind if I opened the window?": {
+"f": "tatoeba-865599.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 9944665,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Could we have the bill, please?": {
+"f": "tatoeba-855237.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 9987307,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I'd like to make an appointment.": {
+"f": "tatoeba-929294.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 10470100,
+"url": "http://www.manythings.org/tatoeba"
+},
+"Could you write that down for me?": {
+"f": "tatoeba-989495.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 10647001,
+"url": "http://www.manythings.org/tatoeba"
+},
+"I've got a job interview tomorrow.": {
+"f": "tatoeba-1011527.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 10708818,
+"url": "http://www.manythings.org/tatoeba"
+},
+"What time does the museum open?": {
+"f": "tatoeba-1039569.mp3",
+"by": "CK",
+"lic": "CC BY-NC-ND 3.0",
+"sid": 10849958,
+"url": "http://www.manythings.org/tatoeba"
+}
+}
