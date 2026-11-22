@@ -553,7 +553,10 @@ let installEvent = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvent = e; if (view.name==='home' && state.onboarded) render(); });
 window.addEventListener('appinstalled', () => { installEvent = null; state.installHidden = true; save(); toast('Fertig! Die App ist jetzt installiert.'); if (view.name==='home') render(); });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js', {updateViaCache:'none'}).catch(()=>{}); });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js', {updateViaCache:'none'}).catch(()=>{});
+    navigator.serviceWorker.ready.then(r => { if (r.active) r.active.postMessage('warm'); }).catch(()=>{});
+  });
 }
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e) {}
 

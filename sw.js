@@ -1,6 +1,6 @@
 /* Offline-Speicher für „Englisch für unterwegs“.
    Bei jeder Änderung an der App VERSION hochzählen, damit die Geräte die neue Fassung laden. */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = 'englisch-' + VERSION;
 const ASSETS = [
   './',
@@ -26,6 +26,16 @@ self.addEventListener('activate', event => {
       .then(keys => Promise.all(keys.filter(k => k.startsWith('englisch-') && k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
+});
+
+// Selbstheilung: Andere Apps auf derselben Domain (z. B. /hanzi/) können fremde Caches löschen.
+// Die App meldet sich bei jedem Start; fehlt etwas, wird es nachgeladen (nur mit Internet).
+self.addEventListener('message', event => {
+  if (event.data === 'warm') {
+    event.waitUntil(caches.open(CACHE).then(async c => {
+      for (const a of ASSETS) { if (!(await c.match(a))) { try { await c.add(a); } catch (e) {} } }
+    }));
+  }
 });
 
 self.addEventListener('fetch', event => {
