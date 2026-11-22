@@ -70,6 +70,24 @@ document.addEventListener('click', ev => {
 const shuffle = a => { for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
 const byId = id => LESSONS.find(l => l.id === id);
 const pickOne = a => a[Math.floor(Math.random()*a.length)];
+/* Ausgewogene Position der richtigen Antwort: reiner Zufall erzeugt oft Serien an derselben Stelle.
+   Hier wird jede Position gleich oft genutzt, und dieselbe Stelle kommt selten zweimal und nie dreimal hintereinander. */
+const POS_KEY = 'englisch-antwortpos';
+let posHist = []; try { posHist = JSON.parse(localStorage.getItem(POS_KEY) || '[]'); } catch(e){}
+function arrange(opts, answer){
+  const others = shuffle(opts.filter(o => o !== answer)); const n = others.length + 1;
+  if (n < 2 || others.length === opts.length) return shuffle(opts.slice());
+  const h = posHist.map(x => x % n), last = h[h.length-1], prev = h[h.length-2], recent = h.slice(-3 * n);
+  const w = [...Array(n).keys()].map(p => {
+    if (p === last && p === prev) return 0;                 // nie dreimal hintereinander
+    let x = 1 / (1 + recent.filter(y => y === p).length) ** 2; // selten genutzte Stellen bevorzugen
+    return p === last ? x * 0.25 : x;                        // gleiche Stelle wie eben: unwahrscheinlich
+  });
+  let r = Math.random() * w.reduce((a,b) => a + b, 0), pos = 0;
+  while (pos < n - 1 && (r -= w[pos]) > 0) pos++;
+  posHist.push(pos); posHist = posHist.slice(-30); try { localStorage.setItem(POS_KEY, JSON.stringify(posHist)); } catch(e){}
+  others.splice(pos, 0, answer); return others;
+}
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2800); }
 
@@ -504,7 +522,7 @@ function exampleFor(L, w){
 function renderWords(){
   const L = byId(view.id); const ws = wordsOf(L); const k = view.k || 0; const w = ws[k];
   const de = GL[w.toLowerCase().replace(/’/g,"'")]; const last = k === ws.length - 1;
-  if (!view.opts) view.opts = options(de, ws.map(x => GL[x.toLowerCase().replace(/’/g,"'")]));
+  if (!view.opts) view.opts = arrange(options(de, ws.map(x => GL[x.toLowerCase().replace(/’/g,"'")])), de);
   $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="home">⌂ Start</button><div class="progress"><i style="width:${Math.round(k / ws.length * 100)}%"></i></div><div class="muted small" style="min-width:64px;text-align:right">${k+1}/${ws.length}</div></div>
     <div class="ask">${k === 0 ? 'Erst ein paar Wörter, die gleich vorkommen.<br>' : ''}Was bedeutet dieses Wort?</div>
     <div class="phrase big" style="text-align:center"><div class="en" style="font-size:2.1rem">${esc(w)}</div>
@@ -540,7 +558,7 @@ function renderPhrases(){
   const L = byId(view.id); const k = view.k || 0; const p = L.phrases[k];
   const last = k === L.phrases.length - 1;
   const toDe = k % 2 === 0;                      // abwechselnd: Englisch → Deutsch / Deutsch → Englisch
-  if (!view.opts) view.opts = toDe ? options(p.de, L.phrases.map(x => x.de)) : options(p.en, L.phrases.map(x => x.en));
+  if (!view.opts) view.opts = arrange(toDe ? options(p.de, L.phrases.map(x => x.de)) : options(p.en, L.phrases.map(x => x.en)), toDe ? p.de : p.en);
   const answer = toDe ? p.de : p.en;
   $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="home">⌂ Start</button><div class="progress"><i style="width:${Math.round(k / L.phrases.length * 100)}%"></i></div><div class="muted small" style="min-width:64px;text-align:right">${k+1}/${L.phrases.length}</div></div>
     <div class="ask">${toDe ? 'Hör zu: Was bedeutet das?' : 'Wie sagt man das auf Englisch?'}</div>
@@ -654,7 +672,8 @@ async function stepPlay(L){
       if (tok !== speakToken) return;
       await sleep(250); return stepPlay(L);
     }
-    const opts = shuffle([d.en, ...myAlternatives(L, play.k)]);
+    if (!play.opts || play.optsK !== play.k){ play.opts = arrange([d.en, ...myAlternatives(L, play.k)], d.en); play.optsK = play.k; }
+    const opts = play.opts;
     area.innerHTML = `<div class="ask" style="margin-top:0">Was sagst du? Tippe die passende Antwort an.</div>
       <div class="opts">${opts.map(o => `<button class="opt" data-line="${esc(o)}">${esc(N(o))}</button>`).join('')}</div>
       <div class="row" style="margin-top:12px"><button class="say" data-act="playrepeat">🔁 Letzten Satz nochmal</button><button class="say" data-act="playhelp">💡 Hilfe</button></div>`;
@@ -676,7 +695,7 @@ async function stepPlay(L){
   if (play.phase === 'comp'){
     const q = L.comp[play.qi];
     if (!q){ play.phase = 'end'; return stepPlay(L); }
-    q.order = q.order || shuffle(q.o.map((_,i) => i));
+    q.order = q.order || arrange(q.o.map((_,i) => i), q.a);
     area.innerHTML = `<div class="card" style="margin-bottom:12px"><b>Hast du alles verstanden?</b> <span class="muted small">Frage ${play.qi+1} von ${L.comp.length}</span></div>
       <div class="prompt"><div class="en">${gl(q.q)}</div></div>
       <div class="opts">${q.order.map(i => `<button class="opt" data-ci="${i}">${esc(q.o[i])}</button>`).join('')}</div>`;
@@ -983,6 +1002,7 @@ const ASK = { odd:'🧠 Kopf-fit: Was passt nicht zu den anderen?', storyq:'🧠
 function renderEx(){
   if (!run) return go({name:'home'});
   const e = run.queue[run.i];
+  if (e.options && !e.placed){ e.options = arrange(e.options, e.answer); e.placed = true; }
   const pct = Math.round(run.i / run.queue.length * 100);
   const back = 'home';
   let body = '';
@@ -1064,7 +1084,7 @@ function answer(ok, e, o={}){
   if (ok){ if (!run.retried.has(e.key)) run.firstTry++; state.miss[e.key] = Math.max(0,(state.miss[e.key]||0)-1); }
   else {
     state.miss[e.key] = (state.miss[e.key]||0)+1;
-    if (!run.retried.has(e.key)){ run.retried.add(e.key); const copy = {...e, answered:false, bank:null}; if (copy.options) copy.options = shuffle(copy.options.slice()); run.queue.push(copy); }
+    if (!run.retried.has(e.key)){ run.retried.add(e.key); const copy = {...e, answered:false, bank:null, placed:false}; run.queue.push(copy); }
   }
   save();
   const solEn = e.type==='gap' ? e.full : e.en;

@@ -1500,4 +1500,92 @@ const NEWWORDS_DE = {
 };
 Object.assign(GLOSSARY, NEWWORDS_DE);
 
+
+/* Überarbeitete falsche Antworten: etwa so lang und so plausibel wie die richtige,
+   damit man die Lösung nicht an der Länge erkennt. Schlüssel: Lektion | richtige Antwort */
+const DISTRACTOR_FIX = {
+  "umbuchen|Yes, please. That's very kind of you.":["No, thanks. I've already had breakfast.","Yes, please. It leaves from gate thirty-two."],
+  "umbuchen|No, thank you. You've been very helpful.":["Yes, my flight from Frankfurt was delayed.","No, thank you. I'd rather not wait so long."],
+  "umbuchen|Could you possibly write that down for me?":["Write that down for me, and be quick about it.","You must write all of that down for me now.","I want it written down. Do it on that paper."],
+  "umbuchen|She is put on the waiting list.":["She gets the last seat on that flight.","The five o'clock flight is cancelled.","She has to fly from a different airport."],
+  "hotelproblem|I'm afraid there's a problem with the heating.":["Yes, I've already checked out of the room.","I'm afraid I've lost the key to my car."],
+  "hotelproblem|I'm sorry to bother you, but the heating doesn't seem to be working.":["The heating in my room is broken. Come and fix it immediately.","Your hotel is terrible and I want to speak to the manager now.","Why is it so cold in here? Nobody in this hotel does anything."],
+  "hotelproblem|At the back, overlooking the garden":["At the front, next to the main road","On the top floor, above the restaurant","On the ground floor, near reception"],
+  "essengehen|Delicious, thank you. Compliments to the chef!":["Twice a day after meals, the doctor said.","Not yet, thank you. We're still deciding."],
+  "essengehen|Yes, please. We saved some room!":["No, thanks. It contains almonds.","Yes, a table by the window, please."],
+  "essengehen|I'll have the sea bass, please.":["I become the sea bass, please.","Give me the sea bass. Quickly.","I am taking the sea bass now."],
+  "essengehen|The lamb and the sea bass":["Only the lamb with rosemary","Tomato soup and a green salad","The chocolate dessert"],
+  "essengehen|It contains almonds, and her friend is allergic to nuts.":["It is much too spicy, and her friend doesn't like spicy food.","It is served cold, and they would prefer something warm.","It is very expensive, and they don't want to spend so much."],
+  "essengehen|Perfect. Then two sea bass, one without the sauce, and a bottle of white wine.":["Perfect. Then two sea bass, both with extra almond sauce, and a bottle of wine.","Perfect. Then I become two sea bass, one without the sauce, and white wine."],
+  "tagestour|Yes, please. One ticket for Thursday.":["Yes, it usually rains in the Lakes.","No, thanks. Lunch is already included."],
+  "tagestour|Yes – where exactly is the pick-up point?":["Yes – I'll have the lamb with potatoes.","No – I'm allergic to nuts, I'm afraid."],
+  "tagestour|Yes, I'm interested in the day trip to the Lake District on Thursday. What does the price include?":["Yes, I'm interesting in the day trip to the Lake District on Thursday. What costs the price, please?","Yes, I'd like to complain about the day trip to the Lake District last Thursday. It was too long."],
+  "arzt|Should I take them before or after meals?":["Is breakfast included in the price?","Could we have the bill, please?"],
+  "zugausfall|Here you are. Is this the right train for York?":["Platform seven, please. Is it a return ticket?","Yes, it has been cancelled because of the signals."],
+  "zugausfall|There's a problem with the signals.":["The weather is too bad for trains.","There's a strike by the train staff.","There are not enough drivers today."],
+  "zugausfall|Take the 10:40 to Leeds and change there.":["Wait for the next direct train to York.","Take the replacement bus from outside.","Buy a new ticket at the ticket office."],
+  "umtausch|An exchange, please – one size larger.":["A refund, please – it has a hole.","A single, please – one way only."],
+  "umtausch|Do you think so? Thank you!":["Yes, it has a small hole here.","No, I've missed it, I'm afraid."],
+  "umtausch|Take a blue jumper instead":["Get all her money back","Come back again next week","Keep the grey jumper"],
+  "reisebekannte|Likewise! Enjoy the rest of your stay.":["Yes, I used to come here every summer.","Not yet, but I'm going there tomorrow."],
+  "reisebekannte|No, this is her first time.":["Yes, she has been here twice.","Yes, three times with her family.","She comes here every summer."],
+  "reisebekannte|They used to come too, but now they're grown up.":["They live in Cornwall now, so they come every week.","They are coming next week with their own children.","They never liked Cornwall, so they always stayed home."],
+  "erinnerungen|By car with her parents":["By ferry with her school class","By train with her sister","By plane with her husband"],
+  "erinnerungen|The view from the guesthouse":["The farmer's name and his dog","The food at the little hotel","The long drive back home"],
+  "erinnerungen|A farmer stopped and towed us to the next village. We stayed there for three days while they repaired it.":["A farmer stopped and towed us to the next village. We stay there since three days while they repair it.","Nothing much happened. We just drove home the same evening and forgot about the whole thing."],
+  "meinung|Honestly, I'm not so sure. It depends.":["I think about it every single day.","Yes, I do. I take the bus every day."],
+  "meinung|I see what you mean, but I'm not sure I agree.":["You're completely wrong, and everybody knows it.","That's total nonsense. I don't want to discuss it.","No. Next point, please. I have no time for this."],
+  "meinung|How older people will get to the shops":["The noise of the new shuttle bus","The price of parking in the town","That the cinema in town will close"],
+  "meinung|That's true, but on the other hand, the nearest bus stop is quite far from my house.":["That's true, and on the other hand, I live right next to the bus stop, so it's easy.","That's not true at all – the shuttle bus comes every ten minutes, even on Sundays."],
+  "enkel|Not as often as I'd like, but we talk every week.":["Yes, they're the two children in the photo.","No, I've never been on social media at all."],
+  "enkel|They didn't have a telephone at home.":["They didn't have a car in those days.","They lived in England at that time.","They didn't like writing any letters."],
+  "technik|Yes, please – that would be very helpful.":["Yes, please – I work very well with it.","No, thank you – it shows me the password."],
+  "technik|Turning the iPad off and on again":["Choosing a completely new password","Connecting to a different network","Getting a new key card at reception"],
+  "einladung|Thank you for having me – it was lovely.":["Thank you for coming too – it was lovely.","You're welcome to my house any time at all."],
+  "einladung|Thank you, it was delicious, but I'm full.":["No. I don't want any more of that.","I don't want any more. Take it away.","More? No. It wasn't very good anyway."],
+  "wohlbefinden|Oh dear. Maybe you should lie down for a bit.":["Oh good. Then you should overdo it a bit more.","Lovely! Let's go for a long walk up the hill."],
+  "wohlbefinden|I'd love to – thanks for asking.":["I joined you next week, I think.","No, thanks – I'm looking very well."],
+  "zukunft|I'm going to visit some friends.":["I visited some friends last year.","I'm visit some friends next week."],
+  "zukunft|Never. But I've always wanted to see the Highlands – and maybe the Northern Lights.":["Never. But I always want to see the Highlands since many years – and the Northern Lights.","Yes, every single year. I've seen the Highlands and the Northern Lights many times already."],
+  "zukunft|How wonderful! Well, I'm really looking forward to my trip. We'll see what happens.":["How wonderful! Well, I'm really looking forward to see my trip. We'll see what happens.","How boring! Well, I'm not really looking forward to anything. Nothing ever happens."],
+  "tee|With a little milk, please, no sugar.":["With a little cup, please, no sugar.","I take it home with me, if I may."],
+  "tee|Dinner was served very late.":["She didn't like the lunch at all.","She didn't have a good cook.","Tea was very cheap at that time."],
+  "redewendungen|Good luck – I'll keep my fingers crossed!":["Good luck – I'll press my thumbs for you!","Oh well – it's not really my cup of tea."],
+  "nachrichten|They said that the wind would reach eighty miles an hour tonight, and they advised people to stay indoors.":["They said that the wind will reached eighty miles an hour tonight, and they advise people stay indoors.","They said that the weather would be lovely tonight, and they advised everybody to go to the beach."],
+  "wennich|Not starting to learn English sooner":["Moving to Italy when she was younger","Never buying a boat of her own","Not travelling enough with her husband"],
+  "wennich|Buy a boat and sail around Scotland":["Move to Italy for the food and sun","Invite his whole family on a cruise","Learn to play the piano properly"],
+  "wennich|If I were younger, I'd probably move to Italy. I love the food and the sunshine.":["If I would be younger, I'd probably move to Italy. I love the food and the sunshine.","If I was younger, I will probably move to Italy. I loved the food and the sunshine."],
+  "wennich|Well, I wish I had started learning English sooner. I'd have understood so much more on my travels.":["Well, I wish I started learning English sooner. I'd understood so much more on my travels then.","Well, I wish I will start learning English tomorrow. I would understand so much more on my travels."],
+  "edinburgh|I'd rather take the easier path, if that's all right.":["I'd rather to climb the steep path, if that's all right.","Yes, the volcano has been extinct for a very long time."],
+  "edinburgh|Yes – could you tell me how old the castle is?":["Yes – could you tell me how old is the castle is?","No – I'm so far, thank you, I don't need help."],
+  "garten|Good soil, water and patience":["A special fertiliser every week","Lots of sun and nothing else","Cutting the plants every week"],
+  "garten|Crushed eggshells":["A little salt","Cold coffee","Beer traps in pots"],
+  "garten|Ferns and hostas":["Roses and lavender","Tomatoes and beans","Sunflowers and poppies"],
+  "britisch|Not bad at all, actually – I really enjoyed it.":["Not bad at all, actually – I really hated it.","It's a bit chilly today, actually, isn't it?"],
+  "britisch|Yes, it's glorious! Let's hope it lasts.":["By the way, what's your salary these days?","No, I'm not the weather. Let's go inside."],
+  "britisch|I was wondering if you could possibly help me.":["Help me. I need it now, so hurry up.","You must help me. That's your job.","Can you help me or not? Yes or no?"],
+  "reklamation|We were promised a sea view, but we didn't get one.":["We promised a sea view to the hotel, but they didn't want one.","The problem seems to be next week, but we're not sure yet."],
+  "reklamation|I'm afraid that's not good enough.":["That's rubbish, and you know it!","You people are completely useless.","I want all my money back right now."],
+  "reklamation|No sea view, and it wasn't cleaned every day":["The room was too small for two people","It was too noisy because of the road","The room had no bathroom of its own"],
+  "reklamation|A 10% voucher for the next booking":["A full refund for the whole week","A free holiday next summer","A bottle of wine and an apology"],
+  "reklamation|Send a written complaint with photos":["Call the hotel again tomorrow","Drive back to Cornwall next week","Talk to the hotel staff on the phone"],
+  "kennenlernen|Nice to meet you, too.":["Yes, please, with milk.","Turn left at the bank."],
+  "restaurant|No, thank you. That's all.":["Gate twenty-two, I think.","I'm from Germany, actually."],
+  "weg|No, about five minutes on foot.":["Yes, please, a table for two.","I have a reservation for two."],
+  "unterwegs|A return ticket, please.":["Turn right at the station.","It was delicious, thanks!"],
+  "einkaufen|I'm just looking, thank you.":["Turn left at the traffic lights.","Platform three, I'm afraid."],
+  "smalltalk|Thank you, you too!":["I'll take it, please.","Turn left, then right."],
+  "smalltalk|No, this is my first time.":["Yes, by card, if that's okay.","A table for two by the window."]
+};
+(function applyDistractorFix(){
+  const fx = k => DISTRACTOR_FIX[k];
+  for (const l of LESSONS){
+    (l.replies || []).forEach(r => { const f = fx(l.id + '|' + r.a); if (f) r.wrong = f; });
+    (l.gaps || []).forEach(g => { const f = fx(l.id + '|' + g.answer); if (f) g.wrong = f; });
+    (l.polite || []).forEach(p => { const f = fx(l.id + '|' + p.o[p.a]); if (f) p.o = [p.o[p.a], ...f], p.a = 0; });
+    (l.comp || []).forEach(q => { const f = fx(l.id + '|' + q.o[q.a]); if (f) q.o = [q.o[q.a], ...f], q.a = 0; });
+    l.dialog.forEach(d => { if (d.who === 'me' && d.alt){ const f = fx(l.id + '|' + d.en); if (f) d.alt = f; } });
+  }
+})();
+
 if (typeof module !== 'undefined') module.exports = {STAGES, LESSONS, BRAIN, GLOSSARY, NEWWORDS};
