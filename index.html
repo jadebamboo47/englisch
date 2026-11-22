@@ -246,12 +246,12 @@
 .sr-verdict{margin-top:12px;border-radius:16px;padding:14px 16px;background:var(--card);border:3px solid var(--line,#e4ddd0)}
 .sr-verdict.good{border-color:var(--accent);background:#e6f1ec}.sr-verdict.mid{border-color:#d9a400;background:#fbf3d9}.sr-verdict.low{border-color:var(--warm);background:#fbeae4}
 .sr-head{font-weight:800;font-size:1.15rem;margin-bottom:6px}
-body.boot #app{opacity:0} #app{transition:opacity .18s ease}
+html{touch-action:manipulation} body.boot #app{opacity:0} #app{transition:opacity .18s ease}
 </style>
 </head>
 <body class="boot">
 <div id="app"></div>
-<script>setTimeout(function(){document.body.classList.remove("boot")},1500)</script>
+<script>setTimeout(function(){document.body.classList.remove("boot")},3000)</script>
 <div class="feedback" id="fb"><div class="inner" id="fbInner"></div></div>
 <div class="toast" id="toast"></div>
 <script src="content.js"></script>

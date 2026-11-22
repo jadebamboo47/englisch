@@ -310,11 +310,23 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 }
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e) {}
 (function bootReveal(){
+  // iOS startet Home-Bildschirm-Apps manchmal kurz mit falscher Fenstergröße oder Zoom (z. B. Hochformat-Maße im Querformat).
+  // Die App bleibt unsichtbar, bis Schrift geladen ist, Ausrichtung und Zoom stimmen und sich die Größe nicht mehr ändert.
   const show = () => document.body.classList.remove('boot');
   const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  const okNow = () => {
+    const vv = window.visualViewport;
+    if (vv && Math.abs(vv.scale - 1) > 0.02) return false;
+    const o = screen.orientation && screen.orientation.type;
+    if (o && (o.startsWith('landscape') !== (innerWidth > innerHeight))) return false;
+    if (vv && Math.abs(vv.width - innerWidth) > 2) return false;
+    return true;
+  };
   let w = innerWidth, h = innerHeight, stable = 0;
-  const settle = () => new Promise(res => { const tick = () => { if (innerWidth === w && innerHeight === h) stable++; else { stable = 0; w = innerWidth; h = innerHeight; } stable >= 3 ? res() : requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
-  Promise.race([Promise.all([fontsReady, settle()]), sleep(900)]).then(() => requestAnimationFrame(show));
+  const settle = () => new Promise(res => { const tick = () => {
+    if (innerWidth === w && innerHeight === h && okNow()) stable++; else { stable = 0; w = innerWidth; h = innerHeight; }
+    stable >= 8 ? res() : requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+  Promise.race([Promise.all([fontsReady, settle()]), sleep(1600)]).then(() => requestAnimationFrame(show));
 })();
 
 function installHow(){
