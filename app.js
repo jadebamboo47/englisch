@@ -196,7 +196,7 @@ function bar(title, back='home', right=''){
 }
 function render(){
   if (!state.onboarded) return renderWelcome();
-  ({all:renderAll, test:renderTest, testreview:renderTestReview, home:renderHome, hub:renderHub, phrases:renderPhrases, play:renderPlay,
+  ({warmup:renderWarmup, all:renderAll, test:renderTest, testreview:renderTestReview, home:renderHome, hub:renderHub, phrases:renderPhrases, play:renderPlay,
     tip:renderTip, video:renderVideo, ex:renderEx, done:renderDone, settings:renderSettings, chat:renderChat}[view.name] || renderHome)();
 }
 
@@ -365,12 +365,12 @@ function lessonsOf(n){ return LESSONS.filter(l => l.stage === n); }
 function nextLesson(){ for (const st of STAGES.filter(s => s.n > 0)) { const l = lessonsOf(st.n).find(x => !state.done[x.id]); if (l) return l; } return null; }
 
 /* ---------- Geführter Ablauf ---------- */
-function stepsOf(L){ return ['phrases','play', ...(L.tip ? ['tip'] : []), 'ex']; }
-const STEP_NAMES = {phrases:'Neue Wendungen', play:'Gespräch mitspielen', tip:'Kurz erklärt', ex:'Üben'};
+function stepsOf(L){ return ['warmup','phrases','play', ...(L.tip ? ['tip'] : []), 'ex']; }
+const STEP_NAMES = {warmup:'Kopf-fit', phrases:'Neue Wendungen', play:'Gespräch mitspielen', tip:'Kurz erklärt', ex:'Üben'};
 function current(){
   const c = state.cur; const L = c && byId(c.id);
   if (L && stepsOf(L).includes(c.step)) return {L, step:c.step};
-  return {L: nextLesson() || lessonsOf(1)[0], step:'phrases'};
+  return {L: nextLesson() || lessonsOf(1)[0], step:'warmup'};
 }
 function setCur(id, step){ state.cur = {id, step}; save(); }
 function enterStep(id, step){
@@ -631,6 +631,191 @@ function renderVideo(){
 }
 
 /* ============================================================
+   KOPF-FIT: Gedächtnis- und Konzentrationsspiele mit Englisch
+   ============================================================ */
+const GAMES = ['memory','list','story','odd','sort'];
+const GAME_INFO = {
+  memory:{t:'Memory', d:'Finde die Paare: Bild und englisches Wort.'},
+  list:{t:'Einkaufsliste merken', d:'Hör gut zu und merk dir die Reihenfolge.'},
+  story:{t:'Geschichte merken', d:'Hör gut zu – am Ende der Lektion kommen zwei Fragen dazu.'},
+  odd:{t:'Was passt nicht?', d:'Finde das Wort, das nicht zu den anderen passt.'},
+  sort:{t:'Sortieren', d:'Ordne jedes Wort der richtigen Gruppe zu.'}
+};
+function brainState(){ state.brain = Object.assign({pairs:4, list:3, storyN:0}, state.brain || {}); return state.brain; }
+function gameFor(L){ const order = STAGES.flatMap(s => lessonsOf(s.n)); return GAMES[Math.max(0, order.indexOf(L)) % GAMES.length]; }
+const catDe = c => BRAIN.cats[c].de;
+const tile = w => `<span class="pic">${w.pic}</span><span class="word">${esc(w.en)}</span>`;
+function oddRound(){
+  const cats = shuffle(Object.keys(BRAIN.cats)); const main = cats[0], other = cats[1];
+  const three = shuffle(BRAIN.words.filter(w => w.cat === main)).slice(0,3);
+  const odd = pickOne(BRAIN.words.filter(w => w.cat === other));
+  return {main, other, odd, opts: shuffle([...three, odd])};
+}
+
+function renderWarmup(){
+  const L = byId(view.id); const g = gameFor(L); brainState();
+  $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="home">⌂ Start</button><div class="title">🧠 Kopf-fit</div><div class="spacer"></div></div>
+    <div class="hello" style="padding-top:0"><h2>${GAME_INFO[g].t}</h2><p class="muted" style="margin:.3rem 0 14px">${GAME_INFO[g].d}</p></div>
+    <div id="game"></div><div id="gameEnd"></div>`;
+  const el = document.getElementById('game');
+  const finish = (msg) => {
+    save();
+    document.getElementById('gameEnd').innerHTML = `<div class="card" style="text-align:center;margin-top:16px"><div style="font-size:2.2rem">🧠✨</div><p style="margin:.4rem 0 0;font-size:1.1rem">${msg}</p></div>
+      <div style="height:110px"></div><div class="stickynext"><div class="inner"><button class="btn huge" data-act="nextstep:warmup">Weiter zur Lektion ›</button></div></div>`;
+    document.getElementById('gameEnd').scrollIntoView({block:'end', behavior:'smooth'});
+  };
+  ({memory:gameMemory, list:gameList, story:gameStory, odd:gameOdd, sort:gameSort})[g](el, finish, L);
+}
+
+function gameMemory(el, finish){
+  const B = brainState(); const n = B.pairs;
+  const ws = shuffle(BRAIN.words.slice()).slice(0, n);
+  const cards = shuffle(ws.flatMap((w,i) => [{i, kind:'pic', w}, {i, kind:'word', w}]));
+  let open = [], found = 0, moves = 0, lock = false;
+  el.innerHTML = `<div class="memgrid">${cards.map((c,k) => `<button class="mcard" data-k="${k}"><span class="back">?</span><span class="face">${c.kind==='pic' ? `<span class="pic">${c.w.pic}</span>` : `<span class="word">${esc(c.w.en)}</span>`}</span></button>`).join('')}</div>
+    <div class="muted small" id="memInfo" style="text-align:center;margin-top:12px">Tippe zwei Karten an.</div>`;
+  el.querySelectorAll('.mcard').forEach(btn => btn.onclick = () => {
+    const k = +btn.dataset.k, c = cards[k];
+    if (lock || btn.classList.contains('open') || btn.classList.contains('found')) return;
+    btn.classList.add('open'); if (c.kind === 'word') speak(c.w.en);
+    open.push(k);
+    if (open.length < 2) return;
+    moves++;
+    const [a, b] = open.map(x => cards[x]);
+    if (a.i === b.i){
+      open.forEach(x => el.querySelector(`[data-k="${x}"]`).classList.add('found')); open = []; found++;
+      document.getElementById('memInfo').textContent = `${a.w.pic} ${a.w.en} = ${a.w.de}`; speak(a.w.en);
+      if (found === n){
+        const good = moves <= n + 2;
+        if (good) B.pairs = Math.min(8, n + 1); else if (moves > n * 2.5) B.pairs = Math.max(3, n - 1);
+        finish(`Alle ${n} Paare in ${moves} Zügen gefunden!${good ? ' Hervorragendes Gedächtnis – beim nächsten Mal wird es etwas kniffliger.' : ''}`);
+      }
+    } else {
+      lock = true;
+      setTimeout(() => { open.forEach(x => el.querySelector(`[data-k="${x}"]`).classList.remove('open')); open = []; lock = false; }, 1300);
+    }
+  });
+}
+
+function gameList(el, finish){
+  const B = brainState(); const n = B.list;
+  const pool = BRAIN.words.filter(w => ['food','home','clothes'].includes(w.cat));
+  const items = shuffle(pool.slice()).slice(0, n);
+  const extras = shuffle(pool.filter(w => !items.includes(w))).slice(0, Math.min(4, 9 - n));
+  let played = false;
+  const listen = async () => {
+    const tok = ++speakToken;
+    el.querySelector('#listDots').innerHTML = items.map(() => '<span></span>').join('');
+    const dots = [...el.querySelectorAll('#listDots span')];
+    for (let i = 0; i < items.length; i++){
+      if (tok !== speakToken) return;
+      dots[i].classList.add('on'); await speak(items[i].en); await sleep(650);
+    }
+    played = true; el.querySelector('#goPick').disabled = false;
+  };
+  el.innerHTML = `<div class="card" style="text-align:center"><div style="font-size:3rem">🛒</div>
+      <p style="margin:.4rem 0 12px">Deine Einkaufsliste hat <b>${n} Dinge</b>. Hör gut zu!</p>
+      <div class="listdots" id="listDots"></div>
+      <div class="row" style="justify-content:center;margin-top:14px"><button class="say primary" id="replayList" style="flex:0 0 auto;padding:0 20px">🔊 Nochmal anhören</button></div></div>
+    <div style="margin-top:16px"><button class="btn" id="goPick" disabled>Ich habe sie mir gemerkt ›</button></div>`;
+  el.querySelector('#replayList').onclick = () => listen();
+  el.querySelector('#goPick').onclick = () => {
+    stopSpeech();
+    const tiles = shuffle([...items, ...extras]); const picked = [];
+    el.innerHTML = `<p style="margin:0 4px 12px">Tippe die Dinge <b>in der richtigen Reihenfolge</b> an:</p>
+      <div class="tilegrid">${tiles.map((w,k) => `<button class="tile" data-t="${k}">${tile(w)}<span class="num"></span></button>`).join('')}</div>
+      <div id="listRes"></div>`;
+    el.querySelectorAll('.tile').forEach(b => b.onclick = () => {
+      if (picked.length >= n || b.classList.contains('picked')) return;
+      const w = tiles[+b.dataset.t]; picked.push(w); b.classList.add('picked'); b.querySelector('.num').textContent = picked.length; speak(w.en);
+      if (picked.length === n){
+        const right = picked.filter((w,i) => w === items[i]).length;
+        if (right === n) B.list = Math.min(7, n + 1); else if (right < n / 2) B.list = Math.max(3, n - 1);
+        el.querySelectorAll('.tile').forEach(t => { const w = tiles[+t.dataset.t]; const pos = picked.indexOf(w); if (pos >= 0) t.classList.add(items[pos] === w ? 'right' : 'wrong'); });
+        document.getElementById('listRes').innerHTML = `<div class="card" style="margin-top:14px"><b>Richtig wäre gewesen:</b><div class="seq">${items.map((w,i) => `<span>${i+1}. ${w.pic} ${esc(w.en)}</span>`).join('')}</div></div>`;
+        finish(right === n ? `Perfekt – alle ${n} Dinge in der richtigen Reihenfolge! 👏` : `${right} von ${n} an der richtigen Stelle. Gut gemacht!`);
+      }
+    });
+  };
+  setTimeout(listen, 500);
+}
+
+function gameStory(el, finish, L){
+  const B = brainState(); const st = BRAIN.stories[B.storyN % BRAIN.stories.length];
+  state.story = {lesson: L.id, id: st.id}; B.storyN++; save();
+  el.innerHTML = `<div class="card"><div class="muted small" style="font-weight:700">📖 ${esc(st.title)}</div>
+      <div class="story" id="storyText">${st.s.map((x,i) => `<span data-s="${i}">${esc(x)}</span>`).join(' ')}</div>
+      <div class="row" style="margin-top:14px"><button class="say primary" id="storyPlay">🔊 Nochmal anhören</button><button class="say" id="storySlow">🐢 Langsam</button></div></div>`;
+  const play = async (slow) => {
+    stopSpeech(); const tok = speakToken; const spans = [...el.querySelectorAll('[data-s]')];
+    for (let i = 0; i < st.s.length; i++){
+      if (tok !== speakToken) return;
+      spans.forEach((s,j) => s.classList.toggle('reading', j === i));
+      await speak(st.s[i], {other: true, slow}); await sleep(300);
+    }
+    spans.forEach(s => s.classList.remove('reading'));
+  };
+  el.querySelector('#storyPlay').onclick = () => play(false);
+  el.querySelector('#storySlow').onclick = () => play(true);
+  setTimeout(() => play(false).then(() => finish('Merk dir die Geschichte gut – am Ende der Lektion fragen wir nach! 😉')), 500);
+}
+
+function gameOdd(el, finish){
+  const rounds = [oddRound(), oddRound(), oddRound()]; let r = 0, right = 0;
+  const show = () => {
+    const R = rounds[r];
+    el.innerHTML = `<div class="muted small" style="margin:0 4px 10px">Runde ${r+1} von ${rounds.length}</div>
+      <div class="tilegrid two">${R.opts.map((w,k) => `<button class="tile" data-o="${k}">${tile(w)}</button>`).join('')}</div><div id="oddRes"></div>`;
+    el.querySelectorAll('.tile').forEach(b => b.onclick = () => {
+      if (el.querySelector('.tile.right')) return;
+      const w = R.opts[+b.dataset.o]; const ok = w === R.odd;
+      if (ok && !b.dataset.tried) right++;
+      if (!ok){ b.classList.add('wrong'); b.dataset.tried = 1; speak(w.en); toast(`${w.pic} ${w.en} gehört zu „${catDe(w.cat)}“ – versuch ein anderes.`); el.querySelectorAll('.tile').forEach(t => t.dataset.tried = 1); return; }
+      b.classList.add('right'); speak(w.en);
+      document.getElementById('oddRes').innerHTML = `<div class="card" style="margin-top:14px">✓ <b>${esc(w.en)}</b> (${esc(w.de)}) gehört zu „${catDe(R.other)}“ – die anderen sind „${catDe(R.main)}“.</div>
+        ${r < rounds.length - 1 ? '<div style="margin-top:14px"><button class="btn" id="oddNext">Nächste Runde ›</button></div>' : ''}`;
+      if (r < rounds.length - 1) document.getElementById('oddNext').onclick = () => { r++; show(); };
+      else finish(`${right} von ${rounds.length} auf Anhieb gefunden!`);
+    });
+  };
+  show();
+}
+
+function gameSort(el, finish){
+  const cats = shuffle(Object.keys(BRAIN.cats)).slice(0,2);
+  const ws = shuffle(cats.flatMap(c => shuffle(BRAIN.words.filter(w => w.cat === c)).slice(0,4)));
+  let i = 0, right = 0;
+  const show = () => {
+    const w = ws[i];
+    el.innerHTML = `<div class="muted small" style="margin:0 4px 10px">Wort ${i+1} von ${ws.length}</div>
+      <div class="card" style="text-align:center"><div style="font-size:4rem;line-height:1.2">${w.pic}</div><div class="phrase" style="box-shadow:none;padding:4px 0 0"><div class="en">${esc(w.en)}</div></div>
+      <div class="row" style="justify-content:center;margin-top:8px"><button class="say primary" data-say="${esc(w.en)}" style="flex:0 0 auto;padding:0 20px">🔊</button></div></div>
+      <div class="two" style="margin-top:16px">${cats.map(c => `<button class="btn secondary sortbtn" data-c="${c}">${esc(BRAIN.cats[c].de)}<br><span class="muted small">${esc(BRAIN.cats[c].en)}</span></button>`).join('')}</div>`;
+    speak(w.en);
+    el.querySelectorAll('[data-c]').forEach(b => b.onclick = async () => {
+      const ok = b.dataset.c === w.cat; if (ok) right++;
+      b.classList.add(ok ? 'right' : 'wrong'); el.querySelectorAll('[data-c]').forEach(x => x.disabled = true);
+      toast(ok ? `${pickOne(PRAISE)} ${w.en} = ${w.de}` : `${w.en} (${w.de}) gehört zu „${catDe(w.cat)}“.`);
+      await sleep(1100); i++;
+      if (i < ws.length) show(); else { el.innerHTML = ''; finish(`${right} von ${ws.length} richtig sortiert!`); }
+    });
+  };
+  show();
+}
+
+/* Kleine Denk-Aufgaben mitten im Üben */
+function mkOdd(){
+  const R = oddRound(); const lab = w => w.pic + ' ' + w.en;
+  return {type:'odd', key:'odd-' + R.odd.en, en:R.odd.en, de:`„${R.odd.en}“ (${R.odd.de}) gehört zu „${catDe(R.other)}“ – die anderen sind „${catDe(R.main)}“.`,
+    answer: lab(R.odd), options: R.opts.map(lab)};
+}
+function storyQuestions(L){
+  if (!state.story || state.story.lesson !== L.id) return [];
+  const st = BRAIN.stories.find(s => s.id === state.story.id); if (!st) return [];
+  return st.q.map((q,i) => ({type:'storyq', key:'story-' + st.id + i, title:st.title, q:q.q, en:q.o[q.a], answer:q.o[q.a], options:shuffle(q.o.slice())}));
+}
+
+/* ============================================================
    ÜBUNGEN
    ============================================================ */
 const words = s => N(s).trim().split(/\s+/);
@@ -655,7 +840,8 @@ function buildLesson(L){
   ex.push(mk.order(ord), mk.listen(ph[2],P), mk.deen(ph[3],P), mk.meaning(ph[4],P));
   (L.polite || []).forEach(p => ex.push(mk.polite(p)));
   ex.push(mk.recall(ph[5]));
-  return ex;
+  ex.splice(Math.floor(ex.length / 2), 0, mkOdd());
+  return ex.concat(storyQuestions(L));
 }
 function buildReview(){
   const ls = LESSONS.filter(l => state.done[l.id]);
@@ -675,7 +861,7 @@ function startReview(){
   if (!LESSONS.some(l => state.done[l.id])){ toast('Mach zuerst eine Lektion – dann gibt es hier etwas zu wiederholen.'); return; }
   const q = buildReview(); run = {mode:'review', queue:q, i:0, firstTry:0, total:q.length, retried:new Set()}; go({name:'ex'});
 }
-const ASK = { meaning:'Was bedeutet dieser Satz?', listen:'Hör zu. Welchen Satz hörst du?', deen:'Wie sagt man das auf Englisch?',
+const ASK = { odd:'🧠 Kopf-fit: Was passt nicht zu den anderen?', storyq:'🧠 Erinnerst du dich an die Geschichte vom Anfang?', meaning:'Was bedeutet dieser Satz?', listen:'Hör zu. Welchen Satz hörst du?', deen:'Wie sagt man das auf Englisch?',
   order:'Bring die Wörter in die richtige Reihenfolge.', gap:'Welches Wort fehlt?', reply:'Was antwortest du?', recall:'Kannst du es auf Englisch sagen? Sprich es laut aus.' };
 
 function renderEx(){
@@ -690,6 +876,8 @@ function renderEx(){
   else if (e.type==='deen') body = `<div class="prompt"><div class="en">${esc(N(e.de))}</div></div>` + optsHtml();
   else if (e.type==='gap') body = `<div class="prompt"><div class="en">${esc(N(e.en)).replace('___','<span class="gapword">?</span>')}</div><div class="de">${esc(N(e.de))}</div></div>` + optsHtml();
   else if (e.type==='reply') body = `<div class="prompt"><div class="muted small" style="font-weight:700">Jemand sagt zu dir:</div><div class="en">„${esc(N(e.q))}“</div><div class="de" hidden id="qde">${esc(N(e.qde))}</div><div class="row"><button class="say primary" data-say="${esc(e.q)}" data-other="1">🔊 Anhören</button><button class="say" data-act="showqde">🇩🇪 Übersetzung</button></div></div>` + optsHtml();
+  else if (e.type==='odd') body = optsHtml();
+  else if (e.type==='storyq') body = `<div class="prompt"><div class="muted small" style="font-weight:700">📖 ${esc(e.title)}</div><div class="en">${esc(e.q)}</div></div>` + optsHtml();
   else if (e.type==='polite') body = `<div class="prompt"><div class="en" style="font-family:inherit;font-size:1.1rem">${esc(e.ask)}</div></div>` + optsHtml();
   else if (e.type==='order'){
     if (!e.bank){ const w = words(e.en); let s; do { s = shuffle(w.map((t,k)=>({t,k}))); } while (w.length>1 && s.every((x,k)=>x.k===k)); e.bank = s; }
@@ -760,8 +948,8 @@ function answer(ok, e, o={}){
   }
   save();
   const solEn = e.type==='gap' ? e.full : e.en;
-  const solDe = (e.type==='reply' || e.type==='polite') ? '' : e.de;
-  if (!o.silent) speak(solEn);
+  const solDe = (e.type==='reply' || e.type==='polite' || e.type==='storyq') ? '' : e.de;
+  if (!o.silent && e.type !== 'storyq') speak(solEn);
   showFb(ok, ok ? pickOne(PRAISE) : (o.silent ? 'Macht nichts – das kommt gleich noch einmal.' : pickOne(COMFORT)),
     (!ok && !o.silent) || ok ? solEn : '', solDe, next,
     !ok && !o.silent ? '<p class="muted small" style="margin:-6px 0 12px">Diese Aufgabe kommt am Ende noch einmal.</p>' : '');
@@ -769,7 +957,7 @@ function answer(ok, e, o={}){
 function hideFb(){ const fb=document.getElementById('fb'); if (fb) fb.className='feedback'; }
 function next(){
   hideFb(); stopSpeech(); run.i++;
-  if (run.i >= run.queue.length){ if (run.mode==='lesson'){ state.done[run.id] = (state.done[run.id]||0)+1; const nx = lessonAfter(byId(run.id)); if (nx) setCur(nx.id, 'phrases'); else state.cur = null; save(); } return go({name:'done'}); }
+  if (run.i >= run.queue.length){ if (run.mode==='lesson'){ state.done[run.id] = (state.done[run.id]||0)+1; const nx = lessonAfter(byId(run.id)); if (nx) setCur(nx.id, 'warmup'); else state.cur = null; save(); } return go({name:'done'}); }
   renderEx(); window.scrollTo(0,0);
 }
 

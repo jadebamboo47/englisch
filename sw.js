@@ -1,5 +1,5 @@
 /* Offline-Speicher für „Englisch für unterwegs“ – automatisch erzeugt von tools/build_sw.py */
-const VERSION = 'aec5944d';
+const VERSION = '0151cd4b';
 const CACHE = 'englisch-' + VERSION;
 const ASSETS = [
   './',
@@ -18,18 +18,24 @@ const ASSETS = [
   './audio/arzt-bc709b6e53.mp3',
   './audio/britisch-aad20b56cb.mp3',
   './audio/edinburgh-7bdf18f964.mp3',
+  './audio/einkaufen-07ce7f83e6.mp3',
   './audio/einladung-75db5ccf80.mp3',
   './audio/enkel-5762a01e39.mp3',
   './audio/erinnerungen-817b143c93.mp3',
   './audio/essengehen-84bdfe224e.mp3',
+  './audio/flughafen-367717fbf5.mp3',
   './audio/garten-4eb9ad0e2d.mp3',
+  './audio/hotel-f6ca960c93.mp3',
   './audio/hotelproblem-1570666cb9.mp3',
   './audio/index.json',
+  './audio/kennenlernen-81ff51cbf0.mp3',
+  './audio/kopffit-09daf97694.mp3',
   './audio/meinung-7ad6058e51.mp3',
   './audio/nachrichten-63f31b247d.mp3',
   './audio/redewendungen-23fc1ed6bd.mp3',
   './audio/reisebekannte-e4bea29c24.mp3',
   './audio/reklamation-7cc3f3f0e7.mp3',
+  './audio/restaurant-ad89b4ab42.mp3',
   './audio/tagestour-bdb91fa466.mp3',
   './audio/technik-10f68b7d31.mp3',
   './audio/tee-ef1e7ff326.mp3',
@@ -40,6 +46,8 @@ const ASSETS = [
   './audio/test-c1.mp3',
   './audio/umbuchen-caec4b6cd0.mp3',
   './audio/umtausch-6f2ff6ff4e.mp3',
+  './audio/unterwegs-374fc5b9b8.mp3',
+  './audio/weg-c27d0bbf38.mp3',
   './audio/wennich-8495bc8e7f.mp3',
   './audio/wohlbefinden-6bf2463e8a.mp3',
   './audio/zugausfall-de4eb80556.mp3',

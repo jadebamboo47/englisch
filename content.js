@@ -1301,4 +1301,75 @@ const VIDEOS = {
   reklamation:["0VPwGqiWT04","Are you good at complaining? – 6 Minute English","BBC Learning English"]
 };
 LESSONS.forEach(l => { if (VIDEOS[l.id]) l.video = {id:VIDEOS[l.id][0], t:VIDEOS[l.id][1], src:VIDEOS[l.id][2]}; });
-if (typeof module !== 'undefined') module.exports = {STAGES, LESSONS};
+/* Kopf-fit: Wörter mit Bild (Emoji) und Kategorie, Geschichten zum Merken */
+const BRAIN = {
+  cats: {
+    food:{de:"Essen", en:"Food"}, clothes:{de:"Kleidung", en:"Clothes"}, travel:{de:"Unterwegs", en:"Travel"},
+    home:{de:"Zuhause", en:"At home"}, nature:{de:"Natur", en:"Nature"}, animals:{de:"Tiere", en:"Animals"}
+  },
+  words: [
+    ["food","🍞","bread","Brot"],["food","🧀","cheese","Käse"],["food","🍎","apple","Apfel"],["food","🍋","lemon","Zitrone"],
+    ["food","🍅","tomato","Tomate"],["food","🥕","carrot","Karotte"],["food","🍇","grapes","Weintrauben"],["food","🍓","strawberry","Erdbeere"],
+    ["food","🥚","eggs","Eier"],["food","🥛","milk","Milch"],["food","🍰","cake","Kuchen"],["food","🍯","honey","Honig"],
+    ["food","🍐","pear","Birne"],["food","🍒","cherries","Kirschen"],["food","🍌","banana","Banane"],["food","🥔","potatoes","Kartoffeln"],
+    ["clothes","🎩","hat","Hut"],["clothes","🧣","scarf","Schal"],["clothes","🧤","gloves","Handschuhe"],["clothes","🧥","coat","Mantel"],
+    ["clothes","🧦","socks","Socken"],["clothes","👗","dress","Kleid"],["clothes","👞","shoes","Schuhe"],["clothes","👕","shirt","Hemd"],
+    ["clothes","👖","trousers","Hose"],["clothes","👜","handbag","Handtasche"],
+    ["travel","🧳","suitcase","Koffer"],["travel","🎫","ticket","Fahrkarte"],["travel","🗺️","map","Landkarte"],["travel","☂️","umbrella","Regenschirm"],
+    ["travel","📷","camera","Kamera"],["travel","🚆","train","Zug"],["travel","🚌","bus","Bus"],["travel","🚢","ship","Schiff"],
+    ["travel","✈️","plane","Flugzeug"],["travel","🚲","bicycle","Fahrrad"],["travel","🚕","taxi","Taxi"],
+    ["home","🔑","key","Schlüssel"],["home","💡","lamp","Lampe"],["home","🪑","chair","Stuhl"],["home","🛏️","bed","Bett"],
+    ["home","🕰️","clock","Uhr"],["home","📖","book","Buch"],["home","☕","cup","Tasse"],["home","🕯️","candle","Kerze"],
+    ["home","✂️","scissors","Schere"],["home","✉️","letter","Brief"],
+    ["nature","🌳","tree","Baum"],["nature","🌸","flower","Blume"],["nature","☀️","sun","Sonne"],["nature","🌙","moon","Mond"],
+    ["nature","❄️","snow","Schnee"],["nature","⛰️","mountain","Berg"],["nature","🌊","wave","Welle"],["nature","🌹","rose","Rose"],
+    ["nature","🍂","leaves","Blätter"],["nature","🌈","rainbow","Regenbogen"],
+    ["animals","🐕","dog","Hund"],["animals","🐈","cat","Katze"],["animals","🐎","horse","Pferd"],["animals","🐄","cow","Kuh"],
+    ["animals","🐦","bird","Vogel"],["animals","🐑","sheep","Schaf"],["animals","🐇","rabbit","Kaninchen"],["animals","🦆","duck","Ente"],
+    ["animals","🐝","bee","Biene"],["animals","🦋","butterfly","Schmetterling"]
+  ].map(([cat, pic, en, de]) => ({cat, pic, en, de})),
+  stories: [
+    {id:"umbrella", title:"Der vergessene Regenschirm", voice:"f",
+     s:["Last Tuesday, Helen took the bus into town to buy a birthday present for her granddaughter.","It was raining, so she brought her red umbrella.","She bought a blue scarf in a small shop next to the bakery.","When she got home, she realised that her umbrella was still on the bus."],
+     q:[{q:"What did Helen buy for her granddaughter?", o:["A blue scarf","A red umbrella","A birthday cake","A book"], a:0},
+        {q:"Where did she leave her umbrella?", o:["On the bus","In the shop","At the bakery","At home"], a:0}]},
+    {id:"ferry", title:"Die Fähre zur Insel", voice:"m",
+     s:["Peter and Mary wanted to visit a small island in Scotland.","The ferry was supposed to leave at nine o'clock, but because of strong winds it left two hours late.","While they were waiting, they had tea and scones in the harbour café.","On the island, they saw seals lying on the rocks."],
+     q:[{q:"Why was the ferry late?", o:["Because of strong winds","Because of a strike","Because of fog","Because the captain was ill"], a:0},
+        {q:"What did they see on the island?", o:["Seals on the rocks","Dolphins in the sea","Sheep on the beach","A lighthouse"], a:0}]},
+    {id:"neighbour", title:"Der neue Nachbar", voice:"f",
+     s:["A young man called Tom moved into the flat next to Margaret's.","On his first day, he knocked on her door and asked if he could borrow a hammer.","Margaret gave him the hammer and a piece of apple cake.","Since then, Tom has carried her shopping home every Saturday."],
+     q:[{q:"What did Tom want to borrow?", o:["A hammer","Some sugar","A ladder","A book"], a:0},
+        {q:"How does Tom help Margaret now?", o:["He carries her shopping on Saturdays.","He repairs her car.","He walks her dog.","He cooks dinner for her."], a:0}]},
+    {id:"train", title:"Der falsche Zug", voice:"m",
+     s:["Anna was travelling from London to Bath to visit an old friend.","At the station, she got on a train that looked right, but it was going to Bristol.","A friendly conductor explained the mistake and told her to get off at the next stop.","In the end, she arrived in Bath only forty minutes later than planned."],
+     q:[{q:"Where did Anna want to go?", o:["To Bath","To Bristol","To London","To Oxford"], a:0},
+        {q:"How late did she arrive?", o:["Forty minutes","Fourteen minutes","Two hours","One day"], a:0}]},
+    {id:"cooking", title:"Der Kochkurs", voice:"f",
+     s:["Every Thursday evening, Robert goes to an Italian cooking class at the community centre.","Last week, the group made fresh pasta with a tomato and basil sauce.","Robert put far too much salt in his sauce, so the teacher laughed and gave him a glass of water.","Next week, they are going to make tiramisu."],
+     q:[{q:"What did the group make last week?", o:["Fresh pasta","Pizza","Tiramisu","Soup"], a:0},
+        {q:"What was wrong with Robert's sauce?", o:["It was too salty.","It was too spicy.","It was cold.","It was burnt."], a:0}]},
+    {id:"garden", title:"Der Gartenwettbewerb", voice:"m",
+     s:["Every summer, the village has a competition for the most beautiful garden.","This year, Mrs Green won first prize for her roses.","She has been growing roses for more than thirty years.","The prize was a silver cup and a voucher for the garden centre."],
+     q:[{q:"What did Mrs Green win the prize for?", o:["Her roses","Her tomatoes","Her apple cake","Her garden pond"], a:0},
+        {q:"What was the prize?", o:["A silver cup and a voucher","A holiday","Some money","A new bicycle"], a:0}]},
+    {id:"birthday", title:"Die Geburtstagsüberraschung", voice:"f",
+     s:["For her seventy-fifth birthday, Clare's children organised a surprise party.","They told her they were going to a quiet restaurant.","But when she arrived, all her old friends from school were waiting for her.","Clare said it was the best birthday of her life."],
+     q:[{q:"Who was waiting for Clare at the restaurant?", o:["Her old friends from school","Her neighbours","A famous singer","Her doctor"], a:0},
+        {q:"How old was Clare?", o:["75","57","70","85"], a:0}]},
+    {id:"museum", title:"Im Museum", voice:"m",
+     s:["On a rainy Sunday, David took his grandson to the Natural History Museum in London.","The boy was most excited about the enormous dinosaur skeletons.","They spent three hours there and still didn't see everything.","On the way out, they bought a small toy dinosaur in the museum shop."],
+     q:[{q:"What did the boy like most?", o:["The dinosaur skeletons","The museum shop","The café","The train ride"], a:0},
+        {q:"What did they buy?", o:["A toy dinosaur","A book","Some postcards","An umbrella"], a:0}]},
+    {id:"breakfast", title:"Das verpasste Frühstück", voice:"f",
+     s:["At the hotel in Cornwall, breakfast was served from seven until half past nine.","On the first morning, Jean overslept and arrived at a quarter to ten.","The waiter smiled and said that the kitchen was closed, but he brought her some toast and a pot of tea anyway.","Jean left him a generous tip."],
+     q:[{q:"Why did Jean come late to breakfast?", o:["She overslept.","Her bus was late.","She was ill.","She got lost."], a:0},
+        {q:"What did the waiter bring her?", o:["Toast and a pot of tea","A full English breakfast","Coffee and cake","Nothing"], a:0}]},
+    {id:"concert", title:"Konzert im Park", voice:"m",
+     s:["In August, the town organised free concerts in the park every Sunday afternoon.","People brought blankets, picnic baskets and folding chairs.","At the last concert, a brass band played old songs from the 1960s, and many people started dancing on the grass.","Even the mayor joined in."],
+     q:[{q:"When were the concerts?", o:["On Sunday afternoons in August","Every evening in July","On Saturday mornings","At Christmas"], a:0},
+        {q:"Who joined in the dancing?", o:["The mayor","The police","Only the children","Nobody"], a:0}]}
+  ]
+};
+
+if (typeof module !== 'undefined') module.exports = {STAGES, LESSONS, BRAIN};
