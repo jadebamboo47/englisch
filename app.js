@@ -469,10 +469,11 @@ function nextLesson(){ for (const st of STAGES.filter(s => s.n > 0)) { const l =
 
 /* ---------- Geführter Ablauf ---------- */
 function wordsOf(L){ return (typeof NEWWORDS !== 'undefined' && NEWWORDS[L.id] || []).filter(w => GL[w.toLowerCase().replace(/’/g,"'")]); }
-function stepsOf(L){ return ['warmup', ...(wordsOf(L).length ? ['words'] : []), 'phrases','play', ...(L.tip ? ['tip'] : []), 'ex']; }
+function stepsOf(L){ return ['warmup', ...(wordsOf(L).length ? ['words'] : []), 'phrases','play', 'ex']; }
 const STEP_NAMES = {warmup:'Kopf-fit', words:'Neue Wörter', phrases:'Neue Wendungen', play:'Gespräch mitspielen', tip:'Kurz erklärt', ex:'Üben'};
 function current(){
   const c = state.cur; const L = c && byId(c.id);
+  if (L && c.step === 'tip') c.step = 'ex';            // „Kurz erklärt“ gibt es nicht mehr
   if (L && stepsOf(L).includes(c.step)) return {L, step:c.step};
   return {L: nextLesson() || lessonsOf(1)[0], step:'warmup'};
 }
@@ -533,7 +534,6 @@ function renderHub(){
     ...(wordsOf(L).length ? [['words', 'Neue Wörter', wordsOf(L).slice(0,4).join(' · ') + ' …']] : []),
     ['phrases', 'Neue Wendungen', 'Hören, raten, antippen – und nachsprechen'],
     ['play', 'Gespräch mitspielen', L.scene],
-    ...(L.tip ? [['tip', 'Kurz erklärt', L.tip.t]] : []),
     ['ex', 'Üben', 'Fragen und Antworten zum Antippen'],
     ...(L.video ? [['video', '🎬 Video (mit Internet)', L.video.t]] : [])];
   $app.innerHTML = bar(st ? st.title : 'Lektion', 'all') + `

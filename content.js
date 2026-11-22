@@ -1588,4 +1588,236 @@ const DISTRACTOR_FIX = {
   }
 })();
 
+
+/* Gespräch mitspielen: falsche Möglichkeiten inhaltlich klar anders (kein Beinahe-Doppel, keine Grammatikfallen).
+   Schlüssel: Lektion | richtige Zeile */
+const DIALOG_ALT = {
+  "umbuchen|Hello. I've missed my connecting flight to Edinburgh. My flight from Frankfurt was delayed.":["Hello. I'd like to book a table for two for this evening, please. Somewhere by the window.","Hello. I've lost my handbag somewhere in the shop. It's a small brown one with a gold clasp."],
+  "umbuchen|That's quite late. Is there an earlier option, perhaps with another airline?":["Wonderful, I love the sea. Could I have a room with a balcony, please?","Thank you. I'll have the soup to start, and then the fish."],
+  "umbuchen|Yes, please. And will my luggage be transferred automatically?":["No, thank you. I've already eaten, so I'm not hungry.","Yes, please. And could you recommend a good hairdresser near here?"],
+  "umbuchen|That's very kind. Could you write down the flight number for me?":["What a pity. I was really looking forward to the concert tonight.","Not too short, please. Just a little off the ends."],
+  "hotelproblem|Actually, I'm afraid there's a problem. The heating doesn't seem to be working, and it's rather cold.":["Yes, thank you. I'd like a return ticket to London, please. Second class is fine.","Actually, I'm looking for the station. Is it far from here, or can I walk?"],
+  "hotelproblem|Thank you. Also, I asked for a quiet room, but my window faces the main road.":["Thank you. I'll have the lamb with potatoes and a glass of red wine.","Thank you. And how many grandchildren have you got now?"],
+  "hotelproblem|That would be lovely. Would it be possible to move this evening?":["No, thank you. I'd like to pay by card, if that's all right.","That would be lovely. Could I try it on in a larger size?"],
+  "hotelproblem|That's very generous of you. Thank you so much.":["Platform seven? Thank you, I'll go there now.","Twice a day after meals? I'll remember that."],
+  "essengehen|Almost. What would you recommend today?":["Yes. I'd like to send this parcel to Germany, please.","Almost. Which platform does the train to York leave from?"],
+  "essengehen|The sea bass sounds lovely. Does it contain any nuts? My friend is allergic.":["The lamb sounds lovely. Could I pay for it with a voucher next week?","The weather sounds lovely. Shall we go for a walk along the coast tomorrow?"],
+  "essengehen|Perfect. Then two sea bass, one without the sauce, and a bottle of white wine.":["Perfect. Then I'll take the blue jumper instead, in a larger size, please.","Perfect. Then we'll meet at the station at eight and take the coach together."],
+  "essengehen|No, thank you. We'll save some room for dessert.":["No, thank you. We'll take the bus back to the hotel.","Yes, please. Two tickets for the boat trip on Thursday."],
+  "tagestour|Yes, I'm interested in the day trip to the Lake District on Thursday. What does the price include?":["Yes, I'd like to make an appointment with the doctor on Thursday. Is the morning possible?","Yes, I've missed my connecting flight to Edinburgh. Is there another flight this evening?"],
+  "tagestour|How much walking is involved? I'm not very good on steep paths.":["How long do I have to take the tablets? I've got a bit of a cough.","Is breakfast included? And what time does the restaurant open?"],
+  "tagestour|That sounds ideal. Is there a discount for pensioners?":["That sounds terrible. I'd like to make a complaint about my room.","That sounds ideal. Could I have the recipe for the soup?"],
+  "tagestour|And what happens if it rains?":["And how old is your grandson now?","And how much is a stamp for a postcard?"],
+  "arzt|I've had a sore throat since Monday, and now I've got a temperature as well.":["I'd like to exchange this jumper. It's a bit too tight for me.","I've missed my train to York, and now I don't know how to get there."],
+  "arzt|Yes, I take tablets for my blood pressure every morning.":["Yes, I go for a long walk with my dog every morning.","No, I'd like a table by the window, if possible."],
+  "arzt|How often should I take them?":["How much is the jumper in blue?","Which platform does it leave from?"],
+  "arzt|Thank you, doctor. Could I have a receipt for my insurance?":["Thank you, doctor. Could I have the sea bass without the sauce?","Thank you, doctor. Is there a discount for pensioners on the coach?"],
+  "zugausfall|Excuse me, the board says the ten fifteen to York has been cancelled. How else can I get there?":["Excuse me, I'd like to book a double room for three nights, with a view of the sea if possible.","Excuse me, the soup is cold, and we've been waiting for our main course for almost an hour."],
+  "zugausfall|Is my ticket still valid on that train?":["Is the fish fresh today, or is it frozen?","Could you cut it a little shorter at the back?"],
+  "zugausfall|Good. Which platform does it leave from?":["Good. Which size would you recommend?","Good. How long should I take the tablets?"],
+  "zugausfall|And what if I miss it?":["And what's in the sauce?","And how big is the garden?"],
+  "umtausch|Hello. I bought this jumper here yesterday, but unfortunately it's a bit too tight.":["Hello. I booked a room here yesterday, but unfortunately the heating isn't working.","Hello. I'd like two tickets for the boat trip tomorrow morning, please. Is it still possible?"],
+  "umtausch|Yes, here it is. Could I exchange it for a larger size?":["Yes, here it is. Could you tell me the way to the castle?","Yes, here it is. Could I have it with milk and no sugar?"],
+  "umtausch|Hmm. Could I see the blue one?":["Hmm. Could I have the bill, please?","Hmm. Is the museum open on Mondays?"],
+  "umtausch|Do you think so? All right, I'll take the blue one instead.":["Do you think so? All right, I'll take the train at ten forty instead.","Do you think so? All right, I'll have the lamb instead of the fish."],
+  "reisebekannte|No, it's my first time in Cornwall. But I've been to London twice.":["No, thank you. I'd rather have a cup of tea, if you don't mind.","Yes, I'll have the fish and chips, please, with a glass of white wine."],
+  "reisebekannte|Thank you! I'm from Germany. I've been learning English again for a few months.":["Thank you! The heating in my room still isn't working, I'm afraid.","Thank you! I'd like to pay by card, if that's possible."],
+  "reisebekannte|How lovely. How long are you staying this time?":["How terrible. Did you call the police?","How lovely. What size do you usually wear?"],
+  "reisebekannte|Not yet, but I will! It's been lovely talking to you.":["Not yet. Could you write down the flight number for me?","Yes, three times a day after meals, for five days."],
+  "erinnerungen|Mine was to Italy, in 1972. We went by car with my parents.":["Mine is a cup of tea with milk, please. No sugar, thank you.","Mine is the blue one, I think. It was a bit too tight."],
+  "erinnerungen|Oh yes. We were driving through the Alps when the car suddenly broke down.":["Oh yes. I'd like to book two tickets for Thursday, please.","Oh yes. The doctor gave me some tablets for my throat."],
+  "erinnerungen|A farmer stopped and towed us to the next village. We stayed there for three days while they repaired it.":["I'd like the sea bass, please, but without the sauce, because my friend is allergic to nuts.","The train to York has been cancelled, so I'm taking the ten forty to Leeds and changing there."],
+  "erinnerungen|It was! I'll never forget the view from our little guesthouse.":["It was! Could I have a receipt for my insurance, please?","It was! Is there a discount for pensioners on the coach?"],
+  "meinung|I see your point, but I'm not so sure. What worries me is how older people will get to the shops.":["Thank you, that's very kind. I'd like a room at the back, overlooking the garden, please.","I've had a sore throat since Monday, and now I've got a temperature as well, doctor."],
+  "meinung|That's true, but on the other hand, the nearest bus stop is quite far from my house.":["That's true, and the sea bass here is excellent. Shall we order a bottle of white wine?","That's lovely. My granddaughter has just started university in Manchester, you know."],
+  "meinung|That would help a lot. In my opinion, it depends on how it's organised.":["That would be lovely. Could I see the blue one, please?","That would help. Three times a day, after meals, you said?"],
+  "meinung|Good idea. I couldn't agree more!":["Good morning. I couldn't find the station.","Good idea. I'll have the lamb, please."],
+  "enkel|She looks lovely! They grow up so fast, don't they?":["It looks lovely! Is the castle open on Sundays?","It sounds lovely! Is lunch included in the price?"],
+  "enkel|I've got two. They live quite far away, so we keep in touch by video call.":["I've got two. One with milk and one without, please.","I've got two suitcases. Will they be transferred automatically?"],
+  "enkel|Absolutely. When I was a child, we didn't even have a telephone at home.":["Absolutely. The heating in my room isn't working, and it's rather cold.","Absolutely. I'd like a return ticket to Leeds, please, second class."],
+  "enkel|Not really – he takes after his grandfather. But we get on very well.":["Not really – the train leaves from platform seven. But it's often late.","Not really – the jumper is a bit too tight. Could I try a larger size?"],
+  "technik|Excuse me, I'm afraid I can't connect to the Wi-Fi. Could you help me?":["Excuse me, I'm afraid I've missed my connecting flight. Could you help me?","Excuse me, I'd like to order the sea bass. Does it come with salad?"],
+  "technik|Yes, but then it asks me to log in, and I don't know how.":["Yes, but the sauce has almonds in it, and my friend is allergic.","Yes, but the coach leaves at eight, and I can't get up that early."],
+  "technik|I've done that, but nothing happens.":["I've had that, and it was delicious.","I've been there twice before."],
+  "technik|Oh, now it works! Thank you so much. Now I can make a video call to my family.":["Oh, that's a shame! Is there another flight to Edinburgh later this evening?","Oh, that's too tight! Have you got it in a larger size, perhaps in blue?"],
+  "einladung|Thank you for inviting me. These are for you.":["Thank you. Platform seven, you said?","Thank you. Here is my receipt."],
+  "einladung|A cup of tea would be lovely. Can I give you a hand in the kitchen?":["A room with a sea view would be lovely. Is breakfast included in the price?","A return ticket would be lovely. Which platform does the train leave from?"],
+  "einladung|This roast is absolutely delicious. Could I have the recipe?":["This jumper is absolutely beautiful. Could I have it in blue?","This view is absolutely wonderful. Is that a volcano over there?"],
+  "einladung|Thank you, but I couldn't eat another thing. I've had a wonderful evening.":["Thank you, but I'd like to make a complaint. The room was very noisy.","Thank you, but my ticket isn't valid. I'll have to buy a new one."],
+  "telefonieren|Good morning. I'd like to make an appointment for a cut and blow-dry, please.":["Good morning. I'd like to book a table for four for Saturday evening, please.","Good morning. I'd like to report that the heating in room twelve isn't working."],
+  "telefonieren|Sorry, could you speak up a little? The line isn't very good.":["Sorry, could you bring us the menu? We'd like to order.","Sorry, is this the end of the queue for the museum?"],
+  "telefonieren|Ah, Thursday at ten thirty. Yes, that's fine with me.":["Ah, platform seven. Yes, I'll go there now.","Ah, the sea bass. Yes, without the sauce, please."],
+  "telefonieren|Of course. Shall I spell it for you? It's a German name.":["Of course. Shall I pay now? It's by card.","Of course. Shall I take them before meals?"],
+  "wohlbefinden|Thank you! I try to go for a walk every day. It does me a lot of good.":["Thank you! I'd like to exchange this jumper. It's a bit too tight.","Thank you! The next train to York leaves at ten forty, I think."],
+  "wohlbefinden|Not yet, but I'd like to give it a try. Are the walks very long?":["Not yet, but I'd like to try the cake. Is it homemade?","Not yet, but I'd like to book a room. Is it very expensive?"],
+  "wohlbefinden|That sounds perfect. Although I've been sleeping badly recently, so I'm often tired.":["That sounds perfect. I'll take the blue one, and could I have a bag, please?","That sounds perfect. Two tickets for the boat trip, and one for my friend."],
+  "wohlbefinden|That's good advice. I'll come along next Tuesday!":["That's my luggage. It's the green suitcase.","That's very expensive. I'll leave it, thanks."],
+  "zukunft|Yes! I'm going to visit Scotland next summer with a friend.":["Yes! I'd like the lamb with vegetables, please.","Yes! The heating in my room is broken again."],
+  "zukunft|Never. But I've always wanted to see the Highlands – and maybe the Northern Lights.":["Never. But I'd like a receipt for my insurance – and maybe some tablets for my cough.","Never. But could you tell me where the toilets are – and maybe the way to the station?"],
+  "zukunft|I'm thinking of learning Italian too. It's never too late to learn something new.":["I'm thinking of the sea bass too. Does it come with potatoes or with rice?","I'm thinking of the ten forty to Leeds. Is my ticket valid on that train?"],
+  "zukunft|How wonderful! Well, I'm really looking forward to my trip. We'll see what happens.":["How awful! Well, I'd like to speak to the manager about my room, please.","How much? Well, that's a bit too expensive for me. Have you got anything cheaper?"],
+  "tee|It is! I've always wondered – where does the tradition of afternoon tea actually come from?":["It is! Could you tell me which platform the train to York leaves from, please?","It is! I'd like to exchange this jumper – it's a bit too tight around the arms."],
+  "tee|So she invited friends for tea and cakes in the afternoon?":["So the train to Leeds leaves from platform seven?","So I should take the tablets three times a day?"],
+  "tee|Does it really make a difference?":["Does the coach leave from the station?","Is the room at the back quieter?"],
+  "tee|I'd never have guessed that. Would you mind if I took a photo of the table?":["I'd like to book a table. Would Saturday at eight be possible for four people?","I'd like to complain. Would you mind calling the manager for me, please?"],
+  "redewendungen|Cats and dogs? I suppose that means it's raining very heavily?":["Cats and dogs? I've got one cat, and my neighbour has two dogs.","Cats and dogs? I'd like a ticket for the zoo tomorrow, please."],
+  "redewendungen|Oh dear, I hope it's nothing serious. How was your driving test, by the way?":["How lovely, the sun is shining. Shall we sit outside in the garden this afternoon?","Oh dear, my train has been cancelled. Could you tell me how else to get to York?"],
+  "redewendungen|Congratulations! I'll keep my fingers crossed for your new car, then.":["What a pity! I hope the weather is better for your holiday, then.","I'm sorry! I'll ask the doctor for some tablets for you, then."],
+  "redewendungen|To be honest, jazz isn't really my cup of tea. How about the theatre instead?":["To be honest, I'd like a cup of tea with milk. Have you got any cake as well?","To be honest, the jumper is too tight. Have you got it in a larger size?"],
+  "nachrichten|Yes. Apparently, there's been a storm warning for the whole coast.":["Yes. I'd like a return ticket to the coast, please.","Yes. Apparently, the soup of the day is tomato."],
+  "nachrichten|They said that the wind would reach eighty miles an hour tonight, and they advised people to stay indoors.":["They said that the new café in the high street makes the best cream tea in the whole of Cornwall.","They said that my granddaughter has just started university in Manchester and loves it there."],
+  "nachrichten|The mayor announced that it had been postponed until next weekend.":["The waiter recommended the lamb, but I'd rather have the fish.","The doctor said I should drink plenty of fluids and rest."],
+  "nachrichten|I heard it isn't running today. But according to the forecast, it'll clear up by Sunday.":["I heard it's delicious. But according to my friend, the sauce has almonds in it.","I heard it's very old. But according to the guide, most of the buildings are younger."],
+  "wennich|If I were younger, I'd probably move to Italy. I love the food and the sunshine.":["I'd like to book a double room for two nights, please. With a view of the sea.","I'm afraid the heating in my room isn't working, and it's rather cold tonight."],
+  "wennich|Well, I wish I had started learning English sooner. I'd have understood so much more on my travels.":["Well, I'd like the sea bass, but without the sauce, please. My friend is allergic to almonds.","Well, the train to York has been cancelled, so I'm going to change trains in Leeds instead."],
+  "wennich|Thank you. And what would you do if you won the lottery?":["Thank you. And which platform does it leave from?","Thank you. And could I have the bill, please?"],
+  "wennich|I'd invite my whole family on a trip. But looking back, I wouldn't change a thing.":["I'd like the blue one in a larger size. But I'll keep the receipt, just in case.","I'd like to make an appointment for Thursday. But not too early in the morning."],
+  "edinburgh|A volcano? That's fascinating! Could you tell me when the castle was built?":["A table? That's fine! Could you tell me if the fish is fresh today?","A jumper? That's lovely! Could you tell me if I can exchange it later?"],
+  "edinburgh|And the hill over there – is that a volcano too?":["And the soup over there – is that for us too?","And the bus over there – is that the one to the airport?"],
+  "edinburgh|Is it worth climbing to the top? I'm not sure my knees would agree.":["Is it worth taking antibiotics? I'm not sure my doctor would agree.","Is it worth booking a table? I'm not sure the restaurant is open."],
+  "edinburgh|Calton Hill sounds perfect. And when is the famous festival?":["The sea bass sounds perfect. And what's the soup of the day?","Platform seven sounds perfect. And when does the train leave?"],
+  "garten|Very much! The roses are breathtaking. How long have you been working here?":["Very much! The soup is delicious. Could we have some more bread, please?","Very much! The jumper fits perfectly. Could I pay by card, please?"],
+  "garten|That explains it. What's your secret for such beautiful roses?":["That explains it. What's the password for the Wi-Fi?","That explains it. Which platform does the train leave from?"],
+  "garten|I've got a small garden myself, but the slugs eat everything. They're a real nuisance.":["I've got a small suitcase myself, but the airline has lost it. It's a real nuisance.","I've got a sore throat myself, and I've had a temperature since Monday. It's terrible."],
+  "garten|I'll try that. Would you recommend any plants for a shady spot?":["I'll try that. Would you recommend a good restaurant near the station?","I'll try that. Would you recommend the lamb or the fish tonight?"],
+  "britisch|Sorry, is this the end of the queue?":["Sorry, is this the way to the castle?","Sorry, is this jumper on sale?"],
+  "britisch|Yes, from Germany. I've noticed people here apologise a lot – even when it's not their fault.":["Yes, from Germany. I'd like to book a room for two nights – with breakfast, if possible.","Yes, from Germany. My train to York has been cancelled – how else can I get there?"],
+  "britisch|And when someone says a meal is 'not bad', I'm never sure if they liked it.":["And when the heating doesn't work, I always call reception straight away.","And when I travel abroad, I always take an umbrella with me."],
+  "britisch|That's very useful to know. I was wondering – is it rude to ask people about their salary?":["That's very kind of you. I was wondering – could I have the sea bass without the sauce?","That's very expensive. I was wondering – is there a discount for pensioners on this trip?"],
+  "reklamation|Good morning. I'd like to make a complaint about my holiday in Cornwall last week.":["Good morning. I'd like to book a holiday in Cornwall for next summer, please.","Good morning. I'd like to make an appointment for a cut and blow-dry, please."],
+  "reklamation|We were promised a room with a sea view, but our window looked out onto the car park.":["We'd like a table for two by the window, and a bottle of white wine, please.","We were wondering whether the boat trip on Thursday includes afternoon tea."],
+  "reklamation|Yes. The room should have been cleaned every day, but it was only cleaned twice.":["Yes. The sea bass was delicious, and the waiter was very friendly.","Yes. The train leaves at ten forty, and I have to change in Leeds."],
+  "reklamation|I'm afraid that's not good enough. I'd expect at least a partial refund.":["That's very generous of you. I'll book again next year, then.","That sounds lovely. I'll take the blue one in a larger size."]
+};
+/* Antwort- und Verständnisfragen: Beinahe-Doppel ersetzen (Schlüssel: Lektion | richtige Antwort) */
+const NEAR_FIX = {
+ "tagestour|Fine, I'll be there at a quarter to eight.": [
+  "Lovely, I'd like a table by the window.",
+  "Sorry, could you repeat your surname?"
+ ],
+ "arzt|Yes, tablets for my blood pressure.": [
+  "Yes, a table for two, please.",
+  "No, I've missed my train."
+ ],
+ "erinnerungen|Oh no! What did you do?": [
+  "How lovely! I'll have the same.",
+  "Yes, platform seven, I think."
+ ],
+ "erinnerungen|We went to Italy, by car.": [
+  "I'd like a cup of tea, please.",
+  "It's a bit too tight, I'm afraid."
+ ],
+ "erinnerungen|Really? Where did you go?": [
+  "Really? How much is it?",
+  "Really? Which size do you need?"
+ ],
+ "meinung|Absolutely – I couldn't agree more.": [
+  "Sorry – I've missed my train.",
+  "Yes – a table for two, please."
+ ],
+ "enkel|Neither did we!": [
+  "Platform seven!",
+  "With milk, please!"
+ ],
+ "einladung|Just a little, thank you – it's delicious.": [
+  "Platform seven, thank you – it's late.",
+  "A larger size, thank you – it's tight."
+ ],
+ "einladung|Thank you for having me – it was lovely.": [
+  "Thank you, I'll take the blue one.",
+  "Thank you, I'd like the bill, please."
+ ],
+ "wohlbefinden|Oh dear. Maybe you should lie down for a bit.": [
+  "How lovely. Let's book a table for tonight.",
+  "Oh good. I'll take the train at ten."
+ ],
+ "zukunft|I'm going to visit some friends.": [
+  "I'd like the fish, please.",
+  "It's on platform seven."
+ ],
+ "zukunft|Very much – I can't wait!": [
+  "Platform seven, I think!",
+  "With milk, no sugar!"
+ ],
+ "tee|No, I'd never have guessed that!": [
+  "No, my train has been cancelled!",
+  "Yes, a table for two, please!"
+ ],
+ "tee|With a little milk, please, no sugar.": [
+  "On platform seven, at ten forty.",
+  "In a larger size, if you have one."
+ ],
+ "redewendungen|A piece of cake!": [
+  "Platform seven!",
+  "A table for two!"
+ ],
+ "redewendungen|Good luck – I'll keep my fingers crossed!": [
+  "Oh dear – I hope the rain stops soon!",
+  "How nice – I'll have the same, please!"
+ ],
+ "redewendungen|Yes, let's call it a day.": [
+  "Yes, let's order the fish.",
+  "Yes, let's buy a new car."
+ ],
+ "nachrichten|He said I should rest for a few days.": [
+  "He said the train is on platform seven.",
+  "He said the fish is very fresh today."
+ ],
+ "wennich|I'd spend more time in my garden.": [
+  "I'd like the bill, please.",
+  "It's on the second floor."
+ ],
+ "wennich|If I'd known, I would have called you.": [
+  "I'd like a return ticket, please.",
+  "The sea bass, without the sauce."
+ ],
+ "wennich|Not really – I wouldn't change a thing.": [
+  "Yes – a table for two, please.",
+  "No – the heating isn't working."
+ ],
+ "edinburgh|I'd rather take the easier path, if that's all right.": [
+  "I'd rather have the fish tonight, if that's all right.",
+  "I'd rather pay by card, if that's all right."
+ ],
+ "edinburgh|Yes – could you tell me how old the castle is?": [
+  "Yes – could you bring us the menu, please?",
+  "Yes – could I try it in a larger size?"
+ ],
+ "garten|For a few months now.": [
+  "On platform seven.",
+  "With a little milk."
+ ],
+ "garten|Just a small one, but I love it.": [
+  "Just a little, thank you.",
+  "Just the fish, please."
+ ],
+ "garten|What a good idea – I'll give it a try.": [
+  "What a pity – the train is late.",
+  "What a lovely jumper – is it new?"
+ ],
+ "britisch|Not bad at all, actually – I really enjoyed it.": [
+  "Platform seven, actually – it leaves at ten.",
+  "A table for two, actually – by the window."
+ ],
+ "reklamation|We were promised a sea view, but we didn't get one.": [
+  "We'd like a table for two by the window, please.",
+  "We're going to Scotland next summer with friends."
+ ],
+ "reklamation|I'm afraid I'd prefer a partial refund.": [
+  "I'd like the sea bass, please.",
+  "I'm afraid my train is late."
+ ],
+ "reklamation|Thank you – I appreciate your help.": [
+  "Thank you – I'll take the blue one.",
+  "Thank you – two tickets, please."
+ ]
+};
+(function applyDialogAlt(){
+  for (const l of LESSONS){
+    l.dialog.forEach(d => { if (d.who === 'me'){ const f = DIALOG_ALT[l.id + '|' + d.en]; if (f) d.alt = f; } });
+    (l.replies || []).forEach(r => { const f = NEAR_FIX[l.id + '|' + r.a]; if (f) r.wrong = f; });
+    (l.comp || []).forEach(q => { const f = NEAR_FIX[l.id + '|' + q.o[q.a]]; if (f) q.o = [q.o[q.a], ...f], q.a = 0; });
+  }
+})();
+
 if (typeof module !== 'undefined') module.exports = {STAGES, LESSONS, BRAIN, GLOSSARY, NEWWORDS};
