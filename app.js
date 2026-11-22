@@ -267,7 +267,7 @@ function bar(title, back='home', right=''){
     <div class="title">${esc(title)}</div>${right || '<div class="spacer"></div>'}</div>`;
 }
 function render(){
-  hideGloss();
+  hideGloss(); abortSR();
   if (!state.onboarded) return renderWelcome();
   ({warmup:renderWarmup, all:renderAll, test:renderTest, testreview:renderTestReview, home:renderHome, hub:renderHub, words:renderWords, phrases:renderPhrases, play:renderPlay,
     tip:renderTip, video:renderVideo, ex:renderEx, done:renderDone, settings:renderSettings, chat:KI_ENABLED ? renderChat : renderHome}[view.name] || renderHome)();
@@ -512,6 +512,14 @@ function renderHub(){
     <div style="margin-top:22px"><button class="btn" data-go-to="phrases">Lektion starten</button></div>`;
 }
 
+/* Ergebnis so scrollen, dass es vollständig über dem Weiter-Knopf steht */
+function keepVisible(el){
+  if (!el) return;
+  requestAnimationFrame(() => { const sticky = document.querySelector('.stickynext'); const limit = innerHeight - (sticky ? sticky.offsetHeight + 24 : 24);
+    const r = el.getBoundingClientRect(); if (r.bottom > limit) window.scrollBy({top: r.bottom - limit, behavior:'smooth'}); });
+}
+function revealAfter(id){ const el = document.getElementById(id); keepVisible(el && (el.querySelector('.phrase') || el)); }
+
 /* ---------- Neue Wörter: schwierige Einzelwörter vorab ---------- */
 function exampleFor(L, w){
   const lw = w.toLowerCase().replace(/’/g,"'");
@@ -531,6 +539,7 @@ function renderWords(){
     <div id="wAfter"></div>`;
   const after = () => {
     view.answered = true;
+    document.querySelectorAll('#wOpts .opt.dim').forEach(o => o.remove());
     const ex = exampleFor(L, w);
     document.getElementById('wAfter').innerHTML = `
       <div class="phrase" style="margin-top:16px"><div class="en" style="font-size:1.5rem">${esc(w)} <span class="muted" style="font-family:inherit;font-size:1.1rem">= ${esc(de)}</span></div>
@@ -538,6 +547,7 @@ function renderWords(){
         <div class="row"><button class="say" data-say="${esc(ex)}">🔊 Satz anhören</button></div>` : ''}</div>
       <div style="height:110px"></div>
       <div class="stickynext"><div class="inner"><button class="btn huge" data-act="wordnext">${last ? 'Weiter zu den Wendungen ›' : 'Weiter ›'}</button></div></div>`;
+    revealAfter('wAfter');
   };
   document.querySelectorAll('[data-wo]').forEach(b => b.onclick = () => {
     if (view.answered) return;
@@ -570,13 +580,15 @@ function renderPhrases(){
     <div id="phAfter"></div>`;
   const after = () => {
     view.answered = true;
+    document.querySelectorAll('#phOpts .opt.dim').forEach(o => o.remove());
     document.getElementById('phAfter').innerHTML = `
       <div class="phrase" style="margin-top:16px"><div class="en">${glN(p.en)}</div><div class="de">${esc(N(p.de))}</div>
-        <div class="row"><button class="say primary" data-say="${esc(p.en)}">🔊 Anhören</button><button class="say mic" id="micBtn">🎙️ Nachsprechen</button></div>
+        <div class="row"><button class="say primary" data-say="${esc(p.en)}">🔊 Anhören</button>${canCheckSpeech() ? '<button class="say mic" id="micBtn">🎙️ Nachsprechen</button>' : ''}</div>
         <div class="speakres" id="sr"></div></div>
       <div style="height:110px"></div>
       <div class="stickynext"><div class="inner"><button class="btn huge" data-act="phrasenext">${last ? 'Weiter zum Gespräch ›' : 'Weiter ›'}</button></div></div>`;
-    document.getElementById('micBtn').onclick = () => speakCheck(p.en, document.getElementById('micBtn'), document.getElementById('sr'));
+    revealAfter('phAfter');
+    const mb = document.getElementById('micBtn'); if (mb) mb.onclick = () => speakCheck(p.en, mb, document.getElementById('sr'));
     speak(p.en);
   };
   document.querySelectorAll('[data-ph]').forEach(b => b.onclick = () => {
@@ -594,43 +606,69 @@ function renderPhrases(){
   if (toDe) setTimeout(() => speak(p.en), 300);
 }
 let lastBlobUrl = null;
+const SRClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+function canCheckSpeech(){ return serverReady() || (!!SRClass && navigator.onLine && !state.noSR); }
+let curSR = null;
+function abortSR(){ if (curSR){ const r = curSR; curSR = null; try { r.onend = null; r.abort(); } catch(e){} } }
+function speechVerdict(target, heard, out, probs){
+  const c = compareSpeech(target, heard, probs); const dw = displayWords(target);
+  let wi = 0;
+  const marked = dw.map(w => { if (!w) { wi++; return ''; } const i = wi++; const cls = c.ok[i] ? (c.unsure[i] ? 'w-unsure' : 'w-ok') : 'w-miss'; return `<span class="${cls}">${esc(w)}</span>`; }).filter(Boolean).join(' ');
+  const lvl = c.score >= 80 ? 'good' : c.score >= 50 ? 'mid' : 'low';
+  const head = {good:'✓ Richtig gesagt! Sehr gut verständlich.', mid:'Fast! Die roten Wörter noch einmal üben.', low:'✗ Noch nicht – hör dir das Original an und versuch es nochmal.'}[lvl];
+  out.innerHTML = `<div class="sr-verdict ${lvl}"><div class="sr-head">${head}</div><div class="sr-words">${marked}</div>
+    <div class="muted small">Die App hat verstanden: „${esc(heard)}“</div></div>
+    <div class="row"><button class="say primary" data-say="${esc(target)}">🔊 Original</button></div>`;
+  if (lvl === 'good') toast(pickOne(PRAISE));
+  keepVisible(out);
+  return c.score;
+}
 async function speakCheck(target, btn, out){
-  if (Rec.active){
-    btn.disabled = true; btn.textContent = '⏳ Prüfe …';
-    const blob = await Rec.stop();
-    $app.querySelectorAll('.say.mic').forEach(b => b.classList.remove('recording'));
-    btn.disabled = false; btn.textContent = '🎙️ Nochmal';
-    if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
-    lastBlobUrl = blob ? URL.createObjectURL(blob) : null;
-    let heard = Rec.live, probs = null, note = '';
-    if (blob && serverReady()){
-      try { const r = await transcribe(blob); heard = r.text; probs = r.words.map(w => w.p); }
-      catch(e){ note = 'Server nicht erreichbar – nur Vergleich per Anhören.'; }
+  // Mit eigenem Server (später): Aufnahme + Whisper
+  if (serverReady()){
+    if (Rec.active){
+      btn.disabled = true; btn.textContent = '⏳ Prüfe …';
+      const blob = await Rec.stop();
+      btn.disabled = false; btn.textContent = '🎙️ Nochmal'; btn.classList.remove('recording');
+      try { const r = await transcribe(blob); if (r.text) return speechVerdict(target, r.text, out, r.words.map(w => w.p)); } catch(e){}
+      out.innerHTML = '<div class="sr-verdict low"><div class="sr-head">Ich habe nichts verstanden. Tippe nochmal und sprich deutlich.</div></div>';
+      return;
     }
-    const mine = lastBlobUrl ? `<button class="say" data-playurl="${lastBlobUrl}">▶︎ Mich anhören</button>` : '';
-    const orig = `<button class="say primary" data-say="${esc(target)}">🔊 Original</button>`;
-    if (heard){
-      const c = compareSpeech(target, heard, probs); const dw = displayWords(target);
-      let wi = 0;
-      const marked = dw.map(w => { if (!w) { wi++; return ''; } const i = wi++; const cls = c.ok[i] ? (c.unsure[i] ? 'w-unsure' : 'w-ok') : 'w-miss'; return `<span class="${cls}">${esc(w)}</span>`; }).filter(Boolean).join(' ');
-      const verdict = c.score >= 90 ? 'Sehr gut verständlich! 👏' : c.score >= 65 ? 'Gut – ein paar Wörter noch einmal üben.' : 'Noch einmal versuchen – hör dir das Original an.';
-      out.innerHTML = `<div class="sr-box"><div class="sr-score ${c.score>=90?'good':c.score>=65?'mid':'low'}">${c.score} %</div>
-        <div><div style="font-weight:700">${verdict}</div><div class="sr-words">${marked}</div>
-        <div class="muted small">Verstanden: „${esc(heard)}“</div></div></div>
-        <p class="muted small" style="margin:6px 0 0">Grün = verstanden${probs ? ', gelb = etwas undeutlich' : ''}, rot = nicht verstanden.</p>
-        <div class="row">${orig}${mine}</div>`;
-    } else {
-      out.innerHTML = `<div class="muted small" style="margin:8px 0">${note || 'Vergleiche selbst: erst das Original, dann deine Aufnahme.'}</div><div class="row">${orig}${mine}</div>`;
-    }
+    try { await Rec.start(); btn.classList.add('recording'); btn.textContent = '■ Fertig'; out.innerHTML = '<div class="muted small" style="margin-top:8px">Sprich jetzt den Satz – dann auf „Fertig“ tippen.</div>'; }
+    catch(e){ out.innerHTML = '<div class="muted small" style="margin-top:8px">Das Mikrofon ist nicht verfügbar.</div>'; }
     return;
   }
-  try {
-    await Rec.start();
-    btn.classList.add('recording'); btn.textContent = '■ Fertig';
-    out.innerHTML = '<div class="muted small" style="margin-top:8px">Sprich jetzt den Satz – dann auf „Fertig“ tippen.</div>';
-  } catch(e){
-    out.innerHTML = '<div class="muted small" style="margin-top:8px">Das Mikrofon ist nicht verfügbar. Bitte in den iPad-Einstellungen das Mikrofon für Safari bzw. diese App erlauben.</div>';
-  }
+  // Ohne Server: Spracherkennung des iPads. Ein Tipp genügt – sie hört von selbst auf, wenn man fertig ist.
+  if (curSR){ try { curSR.stop(); } catch(e){} return; }
+  if (!canCheckSpeech()){ out.innerHTML = '<div class="muted small" style="margin-top:8px">Die Sprechprüfung braucht Internet.</div>'; return; }
+  stopSpeech();
+  const r = new SRClass(); curSR = r;
+  r.lang = 'en-GB'; r.interimResults = true; r.continuous = false; r.maxAlternatives = 3;
+  let alts = [], err = '';
+  const reset = () => { btn.classList.remove('recording'); btn.disabled = false; btn.textContent = '🎙️ Nochmal sprechen'; };
+  r.onresult = ev => {
+    const res = [...ev.results]; const last = res[res.length-1];
+    alts = [...last].map(a => res.slice(0,-1).map(x => x[0].transcript).concat(a.transcript).join(' ').trim());
+    out.innerHTML = `<div class="muted" style="margin-top:8px">🎧 … ${esc(alts[0])}</div>`;
+  };
+  r.onerror = ev => { err = ev.error || 'x'; };
+  r.onend = () => {
+    if (curSR !== r) return; curSR = null; reset();
+    if (alts.length){
+      const best = alts.map(h => [h, compareSpeech(target, h).score]).sort((a,b) => b[1]-a[1])[0][0];
+      speechVerdict(target, best, out);
+    } else if (err === 'not-allowed'){
+      out.innerHTML = '<div class="sr-verdict low"><div class="sr-head">Das Mikrofon ist nicht erlaubt.</div><div class="muted small">Bitte in den iPad-Einstellungen Mikrofon und Spracherkennung erlauben.</div></div>';
+    } else if (err === 'service-not-allowed' || err === 'language-not-supported'){
+      state.noSR = true; save();
+      out.innerHTML = '<div class="sr-verdict low"><div class="sr-head">Die Spracherkennung ist auf diesem Gerät nicht verfügbar.</div><div class="muted small">Der Knopf zum Nachsprechen wird deshalb ausgeblendet.</div></div>';
+      document.querySelectorAll('.say.mic, #recMic').forEach(b => b.remove());
+    } else {
+      out.innerHTML = '<div class="sr-verdict low"><div class="sr-head">Ich habe nichts gehört. Tippe nochmal auf 🎙️ und sprich deutlich.</div></div>'; keepVisible(out);
+    }
+  };
+  try { r.start(); btn.classList.add('recording'); btn.textContent = '🎙️ Ich höre zu …'; out.innerHTML = '<div class="muted" style="margin-top:8px">Sprich jetzt den Satz.</div>'; setTimeout(() => { if (curSR === r) try { r.stop(); } catch(e){} }, 12000); }
+  catch(e){ curSR = null; reset(); out.innerHTML = '<div class="muted small" style="margin-top:8px">Die Spracherkennung ließ sich nicht starten.</div>'; }
 }
 
 /* ---------- Schritt 2: Gespräch mitspielen ---------- */
@@ -997,7 +1035,7 @@ function startReview(){
   const q = buildReview(); run = {mode:'review', queue:q, i:0, firstTry:0, total:q.length, retried:new Set()}; go({name:'ex'});
 }
 const ASK = { odd:'🧠 Kopf-fit: Was passt nicht zu den anderen?', storyq:'🧠 Erinnerst du dich an die Geschichte vom Anfang?', meaning:'Was bedeutet dieser Satz?', listen:'Hör zu. Welchen Satz hörst du?', deen:'Wie sagt man das auf Englisch?',
-  order:'Bring die Wörter in die richtige Reihenfolge.', gap:'Welches Wort fehlt?', reply:'Was antwortest du?', recall:'Kannst du es auf Englisch sagen? Sprich es laut aus.' };
+  order:'Bring die Wörter in die richtige Reihenfolge.', gap:'Welches Wort fehlt?', reply:'Was antwortest du?', recall:'Kannst du es auf Englisch sagen? Sag es laut – dann „Lösung zeigen“.' };
 
 function renderEx(){
   if (!run) return go({name:'home'});
@@ -1025,7 +1063,7 @@ function renderEx(){
     body = `<div class="prompt" style="padding:18px 22px"><div class="de" style="margin:0;font-size:1.1rem;color:var(--ink)">${esc(N(e.de))}</div></div>
       <div class="answerbox" id="abox"></div><div class="bank" id="bank">${e.bank.map((x,j)=>`<button class="chip" data-chip="${j}">${esc(x.t)}</button>`).join('')}</div>
       <div class="two"><button class="btn secondary" id="clearBtn">Neu anfangen</button><button class="btn" id="checkBtn" disabled>Prüfen</button></div>`;
-  } else if (e.type==='recall') body = `<div class="prompt"><div class="en">${esc(N(e.de))}</div></div><div id="recallArea"><div class="two"><button class="btn secondary" id="recMic">🎙️ Sprechen</button><button class="btn" id="revealBtn">Lösung zeigen</button></div><div id="recRes"></div></div>`;
+  } else if (e.type==='recall') body = `<div class="prompt"><div class="en">${esc(N(e.de))}</div></div><div id="recallArea"><div class="${canCheckSpeech() ? 'two' : ''}">${canCheckSpeech() ? '<button class="btn secondary" id="recMic">🎙️ Sprechen</button>' : ''}<button class="btn" id="revealBtn">Lösung zeigen</button></div><div id="recRes"></div></div>`;
   $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="${back}" aria-label="Beenden">✕</button><div class="progress"><i style="width:${pct}%"></i></div></div>
     <div class="ask">${e.type==='polite' ? 'Welcher Satz passt?' : ASK[e.type]}</div>${body}`;
   if (e.type==='listen') setTimeout(() => NATIVE[e.en] ? playUrl('audio/native/' + NATIVE[e.en].f) : speak(e.en), 250);
@@ -1041,7 +1079,7 @@ function renderEx(){
     };
     document.getElementById('revealBtn').onclick = reveal;
     const mic = document.getElementById('recMic');
-    mic.onclick = async () => { await speakCheck(e.en, mic, document.getElementById('recRes')); if (!Rec.active && document.getElementById('recRes').innerHTML.includes('sr-box')) { document.getElementById('revealBtn').textContent = 'Weiter ›'; } };
+    if (mic) mic.onclick = () => speakCheck(e.en, mic, document.getElementById('recRes'));
   }
   $app.querySelectorAll('.opt').forEach(b => b.onclick = () => {
     if (e.answered) return;
@@ -1260,7 +1298,7 @@ function renderSettings(){
     document.getElementById('resetArea').innerHTML = `<p style="margin:0 0 12px">Wirklich alles zurücksetzen? Die geschafften Lektionen werden gelöscht.</p>
       <div class="two"><button class="btn secondary" id="rNo">Abbrechen</button><button class="btn" style="background:var(--warm)" id="rYes">Ja, zurücksetzen</button></div>`;
     document.getElementById('rNo').onclick = renderSettings;
-    document.getElementById('rYes').onclick = () => { state.done={}; state.miss={}; save(); toast('Fortschritt zurückgesetzt.'); go({name:'home'}); };
+    document.getElementById('rYes').onclick = () => { state.done={}; state.miss={}; delete state.cur; delete state.brain; delete state.story; play = null; run = null; posHist = []; try { localStorage.removeItem(POS_KEY); } catch(e){} save(); toast('Fortschritt zurückgesetzt – es geht wieder bei Lektion 1 los.'); go({name:'home'}); window.scrollTo(0,0); };
   };
 }
 
