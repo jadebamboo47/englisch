@@ -163,6 +163,12 @@
   .install .row button{min-height:52px;padding:0 18px;border-radius:14px;border:2px solid transparent;font-weight:700}
   .install .yes{background:var(--warm);color:#fff}
   .install .later{background:transparent;border-color:rgba(185,83,47,.35)!important;color:var(--warm)}
+  .testcard{display:flex;align-items:center;gap:16px;width:100%;border:2px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:16px 20px;text-align:left;margin-bottom:14px;min-height:84px}
+  .testcard .big{font-size:1.9rem}.testcard b{font-size:1.05rem}.testcard span{color:var(--muted);font-size:.86rem}.testcard .arrow{font-size:1.8rem;color:var(--accent)}
+  .reading{background:var(--card);border-left:6px solid var(--sun);border-radius:16px;padding:18px 20px;margin-bottom:16px;font-size:1.02rem;line-height:1.55;box-shadow:var(--shadow)}
+  .opt.dk{background:transparent;border-style:dashed;color:var(--muted);min-height:58px}
+  .levelbig{font-family:"Fraunces",Georgia,serif;font-size:4.2rem;line-height:1;color:var(--accent)}
+  .lvrow{display:flex;align-items:center;gap:14px;margin:8px 0}.lvrow b{width:34px}.lvrow span{width:44px;text-align:right;color:var(--muted)}
   .welcome{min-height:80vh;display:flex;flex-direction:column;justify-content:center}
   .welcome .flag{font-size:3.4rem}
   @media (max-width:520px){ .two{grid-template-columns:1fr} html{font-size:calc(19px * var(--scale))} }
@@ -522,7 +528,7 @@ function bar(title, back='home', right=''){
 
 function render(){
   if (!state.onboarded) return renderWelcome();
-  ({home:renderHome, hub:renderHub, phrases:renderPhrases, dialog:renderDialog, ex:renderEx, done:renderDone, settings:renderSettings}[view.name] || renderHome)();
+  ({test:renderTest, testreview:renderTestReview, home:renderHome, hub:renderHub, phrases:renderPhrases, dialog:renderDialog, ex:renderEx, done:renderDone, settings:renderSettings}[view.name] || renderHome)();
 }
 
 /* ---------- Willkommen ---------- */
@@ -573,6 +579,120 @@ function installBanner(){
   </div></div>`;
 }
 
+/* ============================================================
+   EINSTUFUNGSTEST (24 Fragen, A2 → C1)
+   ============================================================ */
+const TEST = [
+  // ---- A2 ----
+  {lv:'A2', q:'Yesterday we ___ to the beach.', o:['went','go','have gone','going'], a:0},
+  {lv:'A2', q:"There aren't ___ apples left.", o:['any','some','a','no'], a:0},
+  {lv:'A2', q:"I can't open the door. I've lost my ___.", o:['key','cup','stamp','coat'], a:0},
+  {lv:'A2', ask:'Was ist die passende Antwort?', q:'„Would you like some more tea?“', o:['Yes, please. Just a little.','Yes, I would like.','No, I am not.','Yes, I am thirsty of it.'], a:0},
+  {lv:'A2', text:'Dear Anna,\nWe arrived in Edinburgh on Monday. The hotel is small but very comfortable, and it\'s close to the castle. Unfortunately it rained on Tuesday, so we visited a museum. Tomorrow we\'re taking the train to Glasgow.\nLove, Ruth', q:'Why did they visit a museum?', o:['Because the weather was bad.','Because the castle was closed.','Because the hotel was small.','Because they were tired.'], a:0},
+  {lv:'A2', audio:'audio/test-a2.mp3', q:'When and where does the train leave?', o:['At 9:20 from platform 4','At 9:40 from platform 4','At 9:20 from platform 2','At 4:20 from platform 9'], a:0},
+  // ---- B1 ----
+  {lv:'B1', q:'I ___ in this town since 1985.', o:['have lived','live','am living','lived'], a:0},
+  {lv:'B1', q:'If it rains tomorrow, we ___ at home.', o:['will stay','would stay','stayed','are stay'], a:0},
+  {lv:'B1', q:'„The museum was so crowded that we could hardly move.“ – crowded means …', o:['full of people','very old','very quiet','very expensive'], a:0},
+  {lv:'B1', ask:'Der Kellner sagt:', q:'„I\'m afraid the fish is off today.“', o:['Oh, what a pity. What would you recommend instead?','Great, then I\'ll have the fish.','Off? Could you turn it on, please?','Yes, I\'m afraid too.'], a:0},
+  {lv:'B1', text:'Many people believe that older adults find it difficult to learn new languages. However, recent research suggests that while children may learn pronunciation more easily, adults often make faster progress at the beginning, because they can use what they already know about grammar and the world. Regular practice, even ten minutes a day, appears to be more effective than long sessions once a week.', q:'According to the text, what works best?', o:['Short practice every day','One long lesson a week','Learning pronunciation first','Starting as a child'], a:0},
+  {lv:'B1', audio:'audio/test-b1.mp3', q:'What do passengers need to do to get a free meal?', o:['Show their boarding pass','Pay at the restaurant','Go to the gate first','Wait two hours'], a:0},
+  // ---- B2 ----
+  {lv:'B2', q:'I wish I ___ more time to travel when I was younger.', o:['had had','had','have','would have'], a:0},
+  {lv:'B2', q:'By the time we arrived, the concert ___.', o:['had already started','already starts','has already started','was already start'], a:0},
+  {lv:'B2', q:'„She\'s very down-to-earth.“ means she is …', o:['practical and sensible','very shy','often sad','interested in gardening'], a:0},
+  {lv:'B2', ask:'Welcher Satz ist am höflichsten? Die Musik des Nachbarn ist zu laut.', q:'You say:', o:['Would you mind turning the music down a little?','Turn the music down.','You must make less noise now.','I don\'t mind your music down.'], a:0},
+  {lv:'B2', text:'The town council\'s decision to close the high street to cars has divided opinion. Shop owners initially feared they would lose customers, yet the number of shoppers has actually risen by fifteen per cent since the change. Some elderly residents, however, complain that the nearest bus stop is now a ten-minute walk away, which makes shopping considerably harder for them.', q:'What is the main problem for some older residents?', o:['The bus stop is now further away.','Several shops have closed.','Fewer people go shopping.','Cars are still allowed.'], a:0},
+  {lv:'B2', audio:'audio/test-b2.mp3', q:'What does the company offer?', o:['A different day or the money back','A cheaper tour on Saturday','A tour in the rain','A discount on Sunday morning'], a:0},
+  // ---- C1 ----
+  {lv:'C1', q:'Not only ___ late, but he also forgot the tickets.', o:['did he arrive','he arrived','he did arrive','arrived he'], a:0},
+  {lv:'C1', q:'Had I known about the strike, I ___ a different route.', o:['would have taken','would take','had taken','will take'], a:0},
+  {lv:'C1', q:'„The guide\'s explanation was rather convoluted.“ means it was …', o:['complicated and hard to follow','short and clear','very funny','simply wrong'], a:0},
+  {lv:'C1', q:'„Opera? It\'s not really my cup of tea.“ means …', o:['I don\'t particularly like it.','I don\'t drink tea.','It isn\'t my turn.','It belongs to someone else.'], a:0},
+  {lv:'C1', text:'Although the novel was dismissed by critics when it was first published, it has since acquired something of a cult following, not least because its portrayal of small-town life now reads as remarkably prescient.', q:'What does the text say about the novel today?', o:['It is admired, partly because it seems to have predicted the future.','Critics still dislike it.','It was popular from the very beginning.','It describes life in a big city.'], a:0},
+  {lv:'C1', audio:'audio/test-c1.mp3', q:'What are the locals worried about?', o:['Young families can no longer afford to live there.','Too many people are leaving the island.','Remote workers don\'t pay local taxes.','There are not enough jobs for young people.'], a:0}
+];
+const LEVELS = ['A2','B1','B2','C1'];
+const LEVEL_TEXT = {
+  'A1–A2':'Grundlagen: Die Lektionen der Stufe 1 passen gut.',
+  'A2':'Gute Grundlagen für Reisen und Alltag. Nächster Schritt: B1.',
+  'B1':'Solide Mittelstufe: Alltagsgespräche klappen. Lektionen auf B1-Niveau mit anspruchsvolleren Dialogen passen.',
+  'B2':'Gute Mittelstufe: längere Texte und Gespräche sind kein Problem. Lektionen auf B2-Niveau mit Texten, Redewendungen und feinerer Grammatik passen.',
+  'C1':'Fortgeschritten: Feinheiten, Redewendungen und anspruchsvolle Texte. Lektionen auf C1-Niveau passen.'
+};
+let testRun = null, testAudio = null;
+function startTest(){ testRun = {i:0, ans:[]}; TEST.forEach(t => { t.order = t.order || shuffle(t.o.map((_,k)=>k)); }); go({name:'test'}); }
+function testScore(ans){
+  const per = {}; LEVELS.forEach(l => per[l] = {ok:0, n:0});
+  ans.forEach((a,i) => { const t = TEST[i]; per[t.lv].n++; if (a === t.a) per[t.lv].ok++; });
+  let level = 'A1–A2';
+  for (const l of LEVELS){ if (per[l].n && per[l].ok >= 4) level = l; else break; }
+  return {per, level};
+}
+function playTestAudio(src, btn){
+  try { if (testAudio){ testAudio.pause(); } testAudio = new Audio(src); testAudio.play().catch(e => { if (e && e.name === 'NotSupportedError') toast('Audio konnte nicht abgespielt werden.'); }); } catch(e){}
+}
+function renderTest(){
+  if (!testRun) return renderTestIntro();
+  if (testRun.i >= TEST.length) return renderTestResult();
+  const t = TEST[testRun.i];
+  const pct = Math.round(testRun.i / TEST.length * 100);
+  $app.innerHTML = `<div class="bar"><button class="iconbtn" data-act="testquit" aria-label="Test beenden">✕</button><div class="progress"><i style="width:${pct}%"></i></div><div class="muted small" style="min-width:64px;text-align:right">${testRun.i+1}/${TEST.length}</div></div>
+    <div class="ask">${esc(t.ask || (t.audio ? 'Hör gut zu und beantworte die Frage.' : t.text ? 'Lies den Text und beantworte die Frage.' : 'Welche Antwort passt?'))}</div>
+    ${t.text ? `<div class="reading">${esc(t.text).replace(/\n/g,'<br>')}</div>` : ''}
+    ${t.audio ? `<div class="bigplay"><button class="circle" data-testaudio="${t.audio}" aria-label="Anhören">🔊</button><span class="muted small">So oft anhören, wie du möchtest</span></div>` : ''}
+    <div class="prompt"><div class="en">${esc(t.q).replace('___','<span class="gapword">?</span>')}</div></div>
+    <div class="opts">${t.order.map(k => `<button class="opt" data-testans="${k}">${esc(t.o[k])}</button>`).join('')}
+      <button class="opt dk" data-testans="-1">Weiß ich nicht</button></div>`;
+  if (t.audio) setTimeout(() => playTestAudio(t.audio), 300);
+}
+function renderTestIntro(){
+  const last = state.placement;
+  $app.innerHTML = bar('Einstufungstest') + `<div class="stack">
+    <div class="hubhead" style="margin:8px 4px 6px"><div class="ico">🎯</div><div><h1>Welches Niveau passt?</h1><div class="muted">24 Fragen · ca. 10 Minuten</div></div></div>
+    <div class="card stack">
+      <p style="margin:0">Die Fragen werden nach und nach schwieriger – von leicht bis sehr anspruchsvoll. Es ist völlig normal, dass du die letzten nicht alle weißt.</p>
+      <p style="margin:0">Einfach die passende Antwort antippen. Wenn du etwas nicht weißt, tippe auf <b>„Weiß ich nicht“</b> – bitte nicht raten, dann wird das Ergebnis genauer.</p>
+      <p class="muted small" style="margin:0">Bei vier Fragen hörst du einen kurzen Text – Ton einschalten.</p>
+    </div>
+    ${last ? `<div class="card"><b>Letztes Ergebnis:</b> ${esc(last.level)} <span class="muted small">(${esc(last.date)})</span></div>` : ''}
+    <button class="btn" data-act="teststart">Test starten</button>
+  </div>`;
+}
+function renderTestResult(){
+  if (testAudio) try{ testAudio.pause(); }catch(e){}
+  const {per, level} = testScore(testRun.ans);
+  const answered = testRun.ans.length;
+  const summary = `Einstufung: ${level} · ` + LEVELS.map(l => `${l} ${per[l].ok}/${per[l].n}`).join(' · ');
+  if (!testRun.saved){ state.placement = {level, summary, date:new Date().toLocaleDateString('de-DE')}; save(); testRun.saved = true; }
+  $app.innerHTML = `<div class="done stack">
+    <div class="emoji">🎯</div>
+    <div class="muted" style="font-weight:700">Dein Niveau</div>
+    <div class="levelbig">${esc(level)}</div>
+    <p style="font-size:1.05rem">${esc(LEVEL_TEXT[level])}</p>
+    <div class="card" style="text-align:left">
+      ${LEVELS.map(l => { const p = per[l]; const w = p.n ? Math.round(p.ok/p.n*100) : 0; return `<div class="lvrow"><b>${l}</b><div class="progress"><i style="width:${w}%;${p.ok>=4?'':'background:var(--warm)'}"></i></div><span>${p.ok}/${p.n}</span></div>`; }).join('')}
+      ${answered < TEST.length ? `<p class="muted small" style="margin:10px 0 0">Test nach ${answered} von ${TEST.length} Fragen beendet.</p>` : ''}
+    </div>
+    <div class="card" style="text-align:left"><p class="muted small" style="margin:0 0 8px">Für Claus-Peter – diesen Text weitergeben:</p><div style="font-weight:700">${esc(summary)}</div>
+      <button class="btn secondary" style="margin-top:12px" data-act="testcopy">Text kopieren</button></div>
+    <div class="stack" style="text-align:left">
+      <button class="btn secondary" data-act="testreview">Antworten ansehen</button>
+      <button class="btn ghost" data-go="home">Zur Übersicht</button>
+    </div></div>`;
+  testRun.summary = summary;
+}
+function renderTestReview(){
+  $app.innerHTML = bar('Antworten', 'test') + TEST.map((t,i) => {
+    const a = testRun.ans[i]; if (a === undefined) return '';
+    const ok = a === t.a;
+    return `<div class="phrase"><div class="muted small" style="font-weight:700">${t.lv} · Frage ${i+1} ${ok ? '✓' : '✗'}</div>
+      <div class="en" style="font-size:1.1rem;margin-top:4px">${esc(t.q)}</div>
+      <div style="margin-top:8px;color:var(--accent);font-weight:700">✓ ${esc(t.o[t.a])}</div>
+      ${!ok ? `<div style="color:var(--warm)">${a === -1 ? 'Weiß ich nicht' : 'Deine Antwort: ' + esc(t.o[a])}</div>` : ''}</div>`;
+  }).join('') + `<div style="margin-top:20px"><button class="btn" data-go="home">Zur Übersicht</button></div>`;
+}
+
 /* ---------- Startseite ---------- */
 function allPhrases(){ return LESSONS.flatMap(l => l.phrases.map(p => ({...p, lesson:l.id}))); }
 function dailyPhrase(){ const all = allPhrases(); const d = Math.floor(Date.now()/86400000); return all[(d*7) % all.length]; }
@@ -589,6 +709,7 @@ function renderHome(){
       <p class="muted">${doneCount ? `Du hast schon ${doneCount} von ${LESSONS.length} Lektionen geschafft.` : 'Schön, dass du da bist. Fang einfach mit Lektion 1 an.'}</p>
     </div>
     <div style="height:12px"></div>${installBanner()}
+    <button class="testcard" data-act="testopen"><div class="big">🎯</div><div style="flex:1"><b>Einstufungstest</b><br><span>${state.placement ? 'Ergebnis: ' + esc(state.placement.level) + ' – nochmal machen' : '24 Fragen zum Antippen · ca. 10 Minuten'}</span></div><span class="arrow">›</span></button>
     <div class="daily">
       <div class="lab">Satz des Tages</div>
       <div class="en">${esc(N(dp.en))}</div>
@@ -896,6 +1017,8 @@ function renderSettings(){
 document.addEventListener('click', ev => {
   const t = ev.target.closest('button'); if (!t) return;
   if (t.dataset.say !== undefined){ speak(t.dataset.say, {other: !!t.dataset.other}); return; }
+  if (t.dataset.testaudio){ playTestAudio(t.dataset.testaudio); return; }
+  if (t.dataset.testans !== undefined){ if (testAudio) try{testAudio.pause();}catch(e){} testRun.ans[testRun.i] = parseInt(t.dataset.testans); testRun.i++; renderTest(); window.scrollTo(0,0); return; }
   if (t.dataset.saySlow !== undefined){ speak(t.dataset.saySlow, {slow:true}); return; }
   if (t.dataset.go){ const [n,id] = t.dataset.go.split(':'); go(id ? {name:n, id} : {name:n}); return; }
   if (t.dataset.goTo){ const id = view.id; if (t.dataset.goTo==='ex') return startLesson(id); go({name:t.dataset.goTo, id}); return; }
@@ -905,6 +1028,11 @@ document.addEventListener('click', ev => {
     else if (a==='review') startReview();
     else if (a==='again') startLesson(run.id);
     else if (a==='install' && installEvent){ installEvent.prompt(); installEvent.userChoice.finally(() => { installEvent = null; render(); }); }
+    else if (a==='teststart'){ startTest(); }
+    else if (a==='testopen'){ testRun = null; go({name:'test'}); }
+    else if (a==='testquit'){ if (testRun && testRun.ans.length){ testRun.i = TEST.length; renderTest(); } else go({name:'home'}); }
+    else if (a==='testreview'){ go({name:'testreview'}); }
+    else if (a==='testcopy'){ try { navigator.clipboard.writeText(testRun.summary).then(()=>toast('Kopiert!'), ()=>toast('Kopieren nicht möglich – bitte abschreiben.')); } catch(e){ toast('Kopieren nicht möglich – bitte abschreiben.'); } }
     else if (a==='hideinstall'){ state.installHidden = true; save(); render(); }
   }
 });

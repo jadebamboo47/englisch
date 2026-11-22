@@ -1,6 +1,6 @@
 /* Offline-Speicher für „Englisch für unterwegs“.
    Bei jeder Änderung an der App VERSION hochzählen, damit die Geräte die neue Fassung laden. */
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = 'englisch-' + VERSION;
 const ASSETS = [
   './',
@@ -13,7 +13,11 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
-  './icons/favicon.png'
+  './icons/favicon.png',
+  './audio/test-a2.mp3',
+  './audio/test-b1.mp3',
+  './audio/test-b2.mp3',
+  './audio/test-c1.mp3'
 ];
 
 self.addEventListener('install', event => {
