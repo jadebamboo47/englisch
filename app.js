@@ -612,7 +612,7 @@ function renderWords(){
   const de = GL[w.toLowerCase().replace(/’/g,"'")]; const last = k === ws.length - 1;
   if (!view.opts) view.opts = arrange(options(de, ws.map(x => GL[x.toLowerCase().replace(/’/g,"'")])), de);
   $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="home">⌂ Start</button><div class="progress"><i style="width:${Math.round(k / ws.length * 100)}%"></i></div><div class="muted small" style="min-width:64px;text-align:right">${k+1}/${ws.length}</div></div>
-    <div class="ask">${k === 0 ? 'Erst ein paar Wörter, die gleich vorkommen.<br>' : ''}Was bedeutet dieses Wort?</div>
+    <div class="ask">${k === 0 ? `Neue Wörter zum Thema „${esc(L.title)}“.<br>` : ''}Was bedeutet dieses Wort?</div>
     <div class="phrase big" style="text-align:center"><div class="en" style="font-size:2.1rem">${esc(w)}</div>
       <div class="row" style="justify-content:center"><button class="say primary" data-say="${esc(w)}" style="flex:0 0 auto;padding:0 22px">🔊 Nochmal</button></div></div>
     <div class="opts" id="wOpts">${view.opts.map(o => `<button class="opt" data-wo="${esc(o)}">${esc(o)}</button>`).join('')}</div>
@@ -622,7 +622,7 @@ function renderWords(){
     document.querySelectorAll('#wOpts .opt.dim').forEach(o => o.remove());
     const ex = exampleFor(L, w);
     document.getElementById('wAfter').innerHTML = `
-      <div class="phrase" style="margin-top:16px"><div class="en" style="font-size:1.5rem">${esc(w)} <span class="muted" style="font-family:inherit;font-size:1.1rem">= ${esc(de)}</span></div>
+      <div class="phrase" style="margin-top:14px"><div class="en" style="font-size:1.5rem">${esc(w)} <span class="muted" style="font-family:inherit;font-size:1.1rem">= ${esc(de)}</span></div>
         ${ex ? `<div class="muted small" style="margin-top:10px;font-weight:700">So kommt es vor:</div><div class="en" style="font-size:1.15rem">${gl(ex)}</div>
         <div class="row"><button class="say" data-say="${esc(ex)}">🔊 Satz anhören</button></div>` : ''}</div>
       <div style="height:110px"></div>
@@ -662,7 +662,7 @@ function renderPhrases(){
     view.answered = true;
     document.querySelectorAll('#phOpts .opt.dim').forEach(o => o.remove());
     document.getElementById('phAfter').innerHTML = `
-      <div class="phrase" style="margin-top:16px"><div class="en">${glN(p.en)}</div><div class="de">${esc(N(p.de))}</div>
+      <div class="phrase" style="margin-top:14px"><div class="en">${glN(p.en)}</div><div class="de">${esc(N(p.de))}</div>
         <div class="row"><button class="say primary" data-say="${esc(p.en)}">🔊 Anhören</button>${canCheckSpeech() ? '<button class="say mic" id="micBtn">🎙️ Nachsprechen</button>' : ''}</div>
         <div class="speakres" id="sr"></div></div>
       <div style="height:110px"></div>
