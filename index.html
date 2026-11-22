@@ -177,7 +177,15 @@
   .mcard.open,.mcard.found{background:var(--card);color:var(--ink)}
   .mcard.open .back,.mcard.found .back{display:none}.mcard.open .face,.mcard.found .face{display:block}
   .mcard.found{outline:4px solid var(--accent);opacity:.75}
-  .mcard .pic{font-size:3rem}.mcard .word{font-weight:700;font-size:1.15rem;word-break:break-word}
+  .mcard .pic{font-size:3rem}.mcard .word{font-weight:700;font-size:1.15rem;word-break:break-word;hyphens:auto}
+.mcard .word.de{color:var(--accent);font-family:inherit}
+.mcard.sm .pic{font-size:2.4rem}.mcard.sm .word{font-size:1rem}
+.gw{text-decoration:underline dotted 2px;text-decoration-color:var(--accent);text-underline-offset:5px;cursor:pointer;border-radius:6px}
+.gw:active{background:rgba(0,0,0,.08)}
+.gloss{position:fixed;z-index:60;background:var(--card);color:var(--ink);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:14px 18px;max-width:320px;text-align:center;font-family:inherit}
+.gloss .g-en{font-family:"Fraunces",Georgia,serif;font-size:1.35rem;font-weight:600}
+.gloss .g-de{font-size:1.25rem;margin:4px 0 10px}
+.gloss .say{width:100%}
   .tilegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.tilegrid.two{grid-template-columns:1fr 1fr}
   .tile{position:relative;min-height:120px;border-radius:20px;border:2px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 2px rgba(30,38,56,.05)}
   .tile .pic{font-size:2.6rem}.tile .word{font-weight:700;font-size:1.05rem}

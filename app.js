@@ -15,6 +15,58 @@ const $app = document.getElementById('app');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nm = () => (state.name || '').trim() || 'Maria';
 const N = s => String(s).split('{name}').join(nm());
+
+/* ---------- Wörter antippen: Glossar ---------- */
+const GL = (() => { const m = {}; if (typeof GLOSSARY !== 'undefined') for (const k in GLOSSARY) m[k.toLowerCase().replace(/’/g,"'")] = GLOSSARY[k]; return m; })();
+const GL_MULTI = Object.keys(GL).filter(k => k.includes(' ')).sort((a,b) => b.length - a.length);
+// Wörter, die im Satz nicht unterstrichen werden (zu alltäglich), aber im Schritt „Neue Wörter“ vorkommen dürfen
+const GL_NOMARK = new Set('book booked board rate leave face lie list full stay connect password wish agree opinion guest manager painting festival ideal tradition automatic hammer toy colour grey seat quiet catch tip hurt worry luck smile laugh guess remind notice explain repeat invite relax mention prefer depend suppose promise organise introduce grow climb wonder warn bother charge exchange recommend signals platform available fancy toast pot exam cinema enemy fitter cheaper nearest twice ill wet steep spot suit hole proper'.split(' '));
+const LEM = [[/ies$/,'y'],[/ied$/,'y'],[/es$/,''],[/s$/,''],[/ed$/,''],[/ed$/,'e'],[/d$/,''],[/ing$/,''],[/ing$/,'e'],[/ly$/,'']];
+function glKey(w){
+  w = w.toLowerCase().replace(/’/g,"'");
+  if (GL[w]) return w;
+  for (const [re, rep] of LEM){ const x = w.replace(re, rep); if (x !== w && GL[x]) return x; }
+  return null;
+}
+function gl(text){
+  const s = String(text), low = s.toLowerCase().replace(/’/g,"'"); const marks = [];
+  const isL = ch => ch && /[a-z]/.test(ch);
+  const free = (i, e) => !marks.some(m => i < m[1] && e > m[0]);
+  for (const k of GL_MULTI){
+    let i = 0;
+    while ((i = low.indexOf(k, i)) >= 0){ const e = i + k.length; if (!isL(low[i-1]) && !isL(low[e]) && free(i, e)) marks.push([i, e, k]); i = e; }
+  }
+  const re = /[A-Za-z]+(?:[-'’][A-Za-z]+)*/g; let m;
+  while ((m = re.exec(s))){
+    const i = m.index, e = i + m[0].length; if (!free(i, e)) continue;
+    const k = glKey(m[0]); if (k && !GL_NOMARK.has(k) && k.length > 2) marks.push([i, e, k]);
+  }
+  marks.sort((a,b) => a[0] - b[0]);
+  let out = '', p = 0;
+  for (const [i, e, k] of marks){ out += esc(s.slice(p, i)) + `<span class="gw" data-gw="${esc(k)}">${esc(s.slice(i, e))}</span>`; p = e; }
+  return out + esc(s.slice(p));
+}
+const glN = s => gl(N(s));
+let glossEl = null, glossTimer = 0;
+function hideGloss(){ if (glossEl){ glossEl.remove(); glossEl = null; } clearTimeout(glossTimer); }
+function showGloss(k, anchor){
+  hideGloss();
+  const word = anchor.textContent;
+  glossEl = document.createElement('div'); glossEl.className = 'gloss';
+  glossEl.innerHTML = `<div class="g-en">${esc(word)}</div><div class="g-de">${esc(GL[k])}</div><button class="say primary" data-say="${esc(k)}">🔊 Anhören</button>`;
+  document.body.appendChild(glossEl);
+  const r = anchor.getBoundingClientRect(), w = glossEl.offsetWidth, h = glossEl.offsetHeight;
+  let x = Math.min(Math.max(10, r.left + r.width/2 - w/2), innerWidth - w - 10);
+  let y = r.top - h - 12; if (y < 10) y = r.bottom + 12;
+  glossEl.style.left = x + 'px'; glossEl.style.top = y + 'px';
+  speak(k);
+  glossTimer = setTimeout(hideGloss, 9000);
+}
+document.addEventListener('click', ev => {
+  const g = ev.target.closest && ev.target.closest('.gw');
+  if (g){ ev.preventDefault(); ev.stopPropagation(); showGloss(g.dataset.gw, g); return; }
+  if (glossEl && !glossEl.contains(ev.target)) hideGloss();
+}, {capture:true});
 const shuffle = a => { for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
 const byId = id => LESSONS.find(l => l.id === id);
 const pickOne = a => a[Math.floor(Math.random()*a.length)];
@@ -24,7 +76,8 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 /* ============================================================
    AUDIO: Aufnahmen (Kokoro) mit Rückfall auf die Gerätestimme
    ============================================================ */
-let AIDX = null;
+let AIDX = null, NATIVE = {};
+fetch('audio/native/native.json').then(r => r.ok ? r.json() : {}).then(j => { NATIVE = j || {}; }).catch(() => {});
 fetch('audio/index.json').then(r => r.ok ? r.json() : null).then(j => { AIDX = j; }).catch(() => {});
 let actx = null;
 function audioCtx(){
@@ -195,8 +248,9 @@ function bar(title, back='home', right=''){
     <div class="title">${esc(title)}</div>${right || '<div class="spacer"></div>'}</div>`;
 }
 function render(){
+  hideGloss();
   if (!state.onboarded) return renderWelcome();
-  ({warmup:renderWarmup, all:renderAll, test:renderTest, testreview:renderTestReview, home:renderHome, hub:renderHub, phrases:renderPhrases, play:renderPlay,
+  ({warmup:renderWarmup, all:renderAll, test:renderTest, testreview:renderTestReview, home:renderHome, hub:renderHub, words:renderWords, phrases:renderPhrases, play:renderPlay,
     tip:renderTip, video:renderVideo, ex:renderEx, done:renderDone, settings:renderSettings, chat:renderChat}[view.name] || renderHome)();
 }
 
@@ -365,8 +419,9 @@ function lessonsOf(n){ return LESSONS.filter(l => l.stage === n); }
 function nextLesson(){ for (const st of STAGES.filter(s => s.n > 0)) { const l = lessonsOf(st.n).find(x => !state.done[x.id]); if (l) return l; } return null; }
 
 /* ---------- Geführter Ablauf ---------- */
-function stepsOf(L){ return ['warmup','phrases','play', ...(L.tip ? ['tip'] : []), 'ex']; }
-const STEP_NAMES = {warmup:'Kopf-fit', phrases:'Neue Wendungen', play:'Gespräch mitspielen', tip:'Kurz erklärt', ex:'Üben'};
+function wordsOf(L){ return (typeof NEWWORDS !== 'undefined' && NEWWORDS[L.id] || []).filter(w => GL[w.toLowerCase().replace(/’/g,"'")]); }
+function stepsOf(L){ return ['warmup', ...(wordsOf(L).length ? ['words'] : []), 'phrases','play', ...(L.tip ? ['tip'] : []), 'ex']; }
+const STEP_NAMES = {warmup:'Kopf-fit', words:'Neue Wörter', phrases:'Neue Wendungen', play:'Gespräch mitspielen', tip:'Kurz erklärt', ex:'Üben'};
 function current(){
   const c = state.cur; const L = c && byId(c.id);
   if (L && stepsOf(L).includes(c.step)) return {L, step:c.step};
@@ -377,7 +432,7 @@ function enterStep(id, step){
   setCur(id, step);
   if (step === 'ex') return startLesson(id);
   if (step === 'play') play = null;
-  go(step === 'phrases' ? {name:'phrases', id, k:0} : {name:step, id});
+  go(step === 'phrases' || step === 'words' ? {name:step, id, k:0} : {name:step, id});
 }
 function nextStep(L, step){ const s = stepsOf(L); enterStep(L.id, s[s.indexOf(step) + 1] || 'ex'); }
 function lessonAfter(L){ const order = STAGES.filter(s => s.n > 0).flatMap(s => lessonsOf(s.n)); const i = order.indexOf(L); return order.slice(i+1).find(x => !state.done[x.id]) || nextLesson(); }
@@ -425,6 +480,7 @@ function renderHub(){
   const L = byId(view.id);
   const st = STAGES.find(s => s.n === L.stage);
   const steps = [
+    ...(wordsOf(L).length ? [['words', 'Neue Wörter', wordsOf(L).slice(0,4).join(' · ') + ' …']] : []),
     ['phrases', 'Neue Wendungen', 'Hören, raten, antippen – und nachsprechen'],
     ['play', 'Gespräch mitspielen', L.scene],
     ...(L.tip ? [['tip', 'Kurz erklärt', L.tip.t]] : []),
@@ -437,6 +493,47 @@ function renderHub(){
     <div style="margin-top:22px"><button class="btn" data-go-to="phrases">Lektion starten</button></div>`;
 }
 
+/* ---------- Neue Wörter: schwierige Einzelwörter vorab ---------- */
+function exampleFor(L, w){
+  const lw = w.toLowerCase().replace(/’/g,"'");
+  const sents = [...L.phrases.map(p => p.en), ...L.dialog.map(d => d.en)].filter(t => !t.includes('{name}'));
+  return sents.find(t => t.toLowerCase().replace(/’/g,"'").includes(lw)) ||
+         sents.find(t => t.toLowerCase().includes(lw.split(' ')[0].slice(0, Math.max(4, lw.length - 3))));
+}
+function renderWords(){
+  const L = byId(view.id); const ws = wordsOf(L); const k = view.k || 0; const w = ws[k];
+  const de = GL[w.toLowerCase().replace(/’/g,"'")]; const last = k === ws.length - 1;
+  if (!view.opts) view.opts = options(de, ws.map(x => GL[x.toLowerCase().replace(/’/g,"'")]));
+  $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="home">⌂ Start</button><div class="progress"><i style="width:${Math.round(k / ws.length * 100)}%"></i></div><div class="muted small" style="min-width:64px;text-align:right">${k+1}/${ws.length}</div></div>
+    <div class="ask">${k === 0 ? 'Erst ein paar Wörter, die gleich vorkommen.<br>' : ''}Was bedeutet dieses Wort?</div>
+    <div class="phrase big" style="text-align:center"><div class="en" style="font-size:2.1rem">${esc(w)}</div>
+      <div class="row" style="justify-content:center"><button class="say primary" data-say="${esc(w)}" style="flex:0 0 auto;padding:0 22px">🔊 Nochmal</button></div></div>
+    <div class="opts" id="wOpts">${view.opts.map(o => `<button class="opt" data-wo="${esc(o)}">${esc(o)}</button>`).join('')}</div>
+    <div id="wAfter"></div>`;
+  const after = () => {
+    view.answered = true;
+    const ex = exampleFor(L, w);
+    document.getElementById('wAfter').innerHTML = `
+      <div class="phrase" style="margin-top:16px"><div class="en" style="font-size:1.5rem">${esc(w)} <span class="muted" style="font-family:inherit;font-size:1.1rem">= ${esc(de)}</span></div>
+        ${ex ? `<div class="muted small" style="margin-top:10px;font-weight:700">So kommt es vor:</div><div class="en" style="font-size:1.15rem">${gl(ex)}</div>
+        <div class="row"><button class="say" data-say="${esc(ex)}">🔊 Satz anhören</button></div>` : ''}</div>
+      <div style="height:110px"></div>
+      <div class="stickynext"><div class="inner"><button class="btn huge" data-act="wordnext">${last ? 'Weiter zu den Wendungen ›' : 'Weiter ›'}</button></div></div>`;
+  };
+  document.querySelectorAll('[data-wo]').forEach(b => b.onclick = () => {
+    if (view.answered) return;
+    if (b.dataset.wo === de){
+      document.querySelectorAll('[data-wo]').forEach(o => { o.disabled = true; o.classList.add(o.dataset.wo === de ? 'right' : 'dim'); });
+      toast(pickOne(PRAISE)); after();
+    } else {
+      b.classList.add('wrong'); b.disabled = true; state.miss[w] = (state.miss[w]||0) + 1; save();
+      if (document.querySelectorAll('[data-wo]:not([disabled])').length <= 1){ document.querySelectorAll('[data-wo]').forEach(o => { o.disabled = true; if (o.dataset.wo === de) o.classList.add('right'); }); after(); }
+      else toast('Nicht ganz – versuch es noch einmal.');
+    }
+  });
+  setTimeout(() => speak(w), 300);
+}
+
 /* ---------- Schritt 1: Neue Wendungen – hören, raten, antippen ---------- */
 function renderPhrases(){
   const L = byId(view.id); const k = view.k || 0; const p = L.phrases[k];
@@ -447,7 +544,7 @@ function renderPhrases(){
   $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="home">⌂ Start</button><div class="progress"><i style="width:${Math.round(k / L.phrases.length * 100)}%"></i></div><div class="muted small" style="min-width:64px;text-align:right">${k+1}/${L.phrases.length}</div></div>
     <div class="ask">${toDe ? 'Hör zu: Was bedeutet das?' : 'Wie sagt man das auf Englisch?'}</div>
     <div class="phrase big">
-      ${toDe ? `<div class="en">${esc(N(p.en))}</div>` : `<div class="en" style="font-family:inherit">${esc(N(p.de))}</div>`}
+      ${toDe ? `<div class="en">${glN(p.en)}</div>` : `<div class="en" style="font-family:inherit">${esc(N(p.de))}</div>`}
       ${toDe ? `<div class="row"><button class="say primary" data-say="${esc(p.en)}">🔊 Nochmal</button><button class="say" data-say-slow="${esc(p.en)}">🐢 Langsam</button></div>` : ''}
     </div>
     <div class="opts" id="phOpts">${view.opts.map(o => `<button class="opt" data-ph="${esc(o)}">${esc(N(o))}</button>`).join('')}</div>
@@ -455,7 +552,7 @@ function renderPhrases(){
   const after = () => {
     view.answered = true;
     document.getElementById('phAfter').innerHTML = `
-      <div class="phrase" style="margin-top:16px"><div class="en">${esc(N(p.en))}</div><div class="de">${esc(N(p.de))}</div>
+      <div class="phrase" style="margin-top:16px"><div class="en">${glN(p.en)}</div><div class="de">${esc(N(p.de))}</div>
         <div class="row"><button class="say primary" data-say="${esc(p.en)}">🔊 Anhören</button><button class="say mic" id="micBtn">🎙️ Nachsprechen</button></div>
         <div class="speakres" id="sr"></div></div>
       <div style="height:110px"></div>
@@ -537,7 +634,7 @@ function addBubble(L, k, animate=true){
   const d = L.dialog[k];
   const el = document.createElement('button');
   el.className = 'bub ' + (d.who==='me' ? 'me' : 'other') + (animate ? ' pop' : '');
-  el.innerHTML = `<div class="who">${d.who==='me' ? 'Du' : esc(d.who)}</div><div class="en">${esc(N(d.en))}</div><div class="de" ${state.showDe ? '' : 'hidden'}>${esc(N(d.de))}</div>`;
+  el.innerHTML = `<div class="who">${d.who==='me' ? 'Du' : esc(d.who)}</div><div class="en">${glN(d.en)}</div><div class="de" ${state.showDe ? '' : 'hidden'}>${esc(N(d.de))}</div>`;
   el.onclick = () => { const de = el.querySelector('.de'); if (de.hidden) de.hidden = false; speak(d.en, {other: d.who !== 'me'}); };
   document.getElementById('bubbles').appendChild(el);
   return el;
@@ -580,7 +677,7 @@ async function stepPlay(L){
     if (!q){ play.phase = 'end'; return stepPlay(L); }
     q.order = q.order || shuffle(q.o.map((_,i) => i));
     area.innerHTML = `<div class="card" style="margin-bottom:12px"><b>Hast du alles verstanden?</b> <span class="muted small">Frage ${play.qi+1} von ${L.comp.length}</span></div>
-      <div class="prompt"><div class="en">${esc(q.q)}</div></div>
+      <div class="prompt"><div class="en">${gl(q.q)}</div></div>
       <div class="opts">${q.order.map(i => `<button class="opt" data-ci="${i}">${esc(q.o[i])}</button>`).join('')}</div>`;
     area.scrollIntoView({block:'start', behavior:'smooth'});
     area.querySelectorAll('[data-ci]').forEach(b => b.onclick = () => {
@@ -611,7 +708,7 @@ function renderTip(){
   const L = byId(view.id); const t = L.tip;
   $app.innerHTML = bar('Kurz erklärt', 'home') + `
     <div class="tipcard"><div class="tiphead">💡 ${esc(t.t)}</div><p>${esc(t.d)}</p></div>
-    ${t.ex.map(e => `<div class="phrase"><div class="en">${esc(e[0])}</div><div class="de">${esc(e[1])}</div>
+    ${t.ex.map(e => `<div class="phrase"><div class="en">${gl(e[0])}</div><div class="de">${esc(e[1])}</div>
       <div class="row"><button class="say primary" data-say="${esc(e[0])}">🔊 Anhören</button></div></div>`).join('')}
     <div style="margin-top:22px"><button class="btn huge" data-act="nextstep:tip">Weiter: Üben ›</button></div>`;
 }
@@ -635,13 +732,17 @@ function renderVideo(){
    ============================================================ */
 const GAMES = ['memory','list','story','odd','sort'];
 const GAME_INFO = {
-  memory:{t:'Memory', d:'Finde die Paare: Bild und englisches Wort.'},
+  memory:{t:'Memory', d:'Finde die Paare – Bild und Wort, später auch Englisch und Deutsch.'},
   list:{t:'Einkaufsliste merken', d:'Hör gut zu und merk dir die Reihenfolge.'},
   story:{t:'Geschichte merken', d:'Hör gut zu – am Ende der Lektion kommen zwei Fragen dazu.'},
   odd:{t:'Was passt nicht?', d:'Finde das Wort, das nicht zu den anderen passt.'},
   sort:{t:'Sortieren', d:'Ordne jedes Wort der richtigen Gruppe zu.'}
 };
-function brainState(){ state.brain = Object.assign({pairs:4, list:3, storyN:0}, state.brain || {}); return state.brain; }
+function brainState(){
+  state.brain = Object.assign({pairs:6, list:3, storyN:0}, state.brain || {});
+  if (!state.brain.v2){ state.brain.pairs = Math.max(6, state.brain.pairs); state.brain.v2 = 1; }
+  return state.brain;
+}
 function gameFor(L){ const order = STAGES.flatMap(s => lessonsOf(s.n)); return GAMES[Math.max(0, order.indexOf(L)) % GAMES.length]; }
 const catDe = c => BRAIN.cats[c].de;
 const tile = w => `<span class="pic">${w.pic}</span><span class="word">${esc(w.en)}</span>`;
@@ -660,6 +761,7 @@ function renderWarmup(){
   const el = document.getElementById('game');
   const finish = (msg) => {
     save();
+    if (!document.getElementById('gameEnd') || !el.isConnected) return;
     document.getElementById('gameEnd').innerHTML = `<div class="card" style="text-align:center;margin-top:16px"><div style="font-size:2.2rem">🧠✨</div><p style="margin:.4rem 0 0;font-size:1.1rem">${msg}</p></div>
       <div style="height:110px"></div><div class="stickynext"><div class="inner"><button class="btn huge" data-act="nextstep:warmup">Weiter zur Lektion ›</button></div></div>`;
     document.getElementById('gameEnd').scrollIntoView({block:'end', behavior:'smooth'});
@@ -667,32 +769,44 @@ function renderWarmup(){
   ({memory:gameMemory, list:gameList, story:gameStory, odd:gameOdd, sort:gameSort})[g](el, finish, L);
 }
 
+function memReviewPool(){
+  // Wiederholung: Wörter aus bereits erledigten Lektionen (Englisch ↔ Deutsch)
+  return LESSONS.filter(l => state.done[l.id]).flatMap(l => wordsOf(l))
+    .map(en => ({en, de: GL[en.toLowerCase().replace(/’/g,"'")]}))
+    .filter(x => x.de && x.en.length <= 16 && x.de.length <= 18);
+}
 function gameMemory(el, finish){
   const B = brainState(); const n = B.pairs;
-  const ws = shuffle(BRAIN.words.slice()).slice(0, n);
-  const cards = shuffle(ws.flatMap((w,i) => [{i, kind:'pic', w}, {i, kind:'word', w}]));
+  const review = shuffle(memReviewPool()).filter((x,i,a) => a.findIndex(y => y.en === x.en) === i).slice(0, Math.floor(n / 2));
+  const pics = shuffle(BRAIN.words.slice()).slice(0, n - review.length);
+  const pairs = [...pics.map(w => ({a:{t:'pic', v:w.pic}, b:{t:'en', v:w.en}, en:w.en, de:w.de, pic:w.pic})),
+                 ...review.map(w => ({a:{t:'en', v:w.en}, b:{t:'de', v:w.de}, en:w.en, de:w.de}))];
+  const cards = shuffle(pairs.flatMap((p,i) => [{i, f:p.a}, {i, f:p.b}]));
+  const cols = cards.length > 16 ? 5 : 4;
   let open = [], found = 0, moves = 0, lock = false;
-  el.innerHTML = `<div class="memgrid">${cards.map((c,k) => `<button class="mcard" data-k="${k}"><span class="back">?</span><span class="face">${c.kind==='pic' ? `<span class="pic">${c.w.pic}</span>` : `<span class="word">${esc(c.w.en)}</span>`}</span></button>`).join('')}</div>
-    <div class="muted small" id="memInfo" style="text-align:center;margin-top:12px">Tippe zwei Karten an.</div>`;
+  const face = f => f.t === 'pic' ? `<span class="pic">${f.v}</span>` : `<span class="word${f.t === 'de' ? ' de' : ''}">${esc(f.v)}</span>`;
+  el.innerHTML = `<div class="memgrid" style="grid-template-columns:repeat(${cols},1fr)">${cards.map((c,k) => `<button class="mcard${cols > 4 ? ' sm' : ''}" data-k="${k}"><span class="back">?</span><span class="face">${face(c.f)}</span></button>`).join('')}</div>
+    <div class="muted small" id="memInfo" style="text-align:center;margin-top:12px">${n} Paare${review.length ? ` – Bild ↔ Wort und Englisch ↔ Deutsch` : ''}. Tippe zwei Karten an.</div>`;
   el.querySelectorAll('.mcard').forEach(btn => btn.onclick = () => {
     const k = +btn.dataset.k, c = cards[k];
     if (lock || btn.classList.contains('open') || btn.classList.contains('found')) return;
-    btn.classList.add('open'); if (c.kind === 'word') speak(c.w.en);
+    btn.classList.add('open'); if (c.f.t === 'en') speak(c.f.v);
     open.push(k);
     if (open.length < 2) return;
     moves++;
     const [a, b] = open.map(x => cards[x]);
     if (a.i === b.i){
+      const p = pairs[a.i];
       open.forEach(x => el.querySelector(`[data-k="${x}"]`).classList.add('found')); open = []; found++;
-      document.getElementById('memInfo').textContent = `${a.w.pic} ${a.w.en} = ${a.w.de}`; speak(a.w.en);
+      document.getElementById('memInfo').textContent = `${p.pic ? p.pic + ' ' : ''}${p.en} = ${p.de}`; speak(p.en);
       if (found === n){
-        const good = moves <= n + 2;
-        if (good) B.pairs = Math.min(8, n + 1); else if (moves > n * 2.5) B.pairs = Math.max(3, n - 1);
-        finish(`Alle ${n} Paare in ${moves} Zügen gefunden!${good ? ' Hervorragendes Gedächtnis – beim nächsten Mal wird es etwas kniffliger.' : ''}`);
+        const good = moves <= Math.round(n * 1.6);
+        if (good) B.pairs = Math.min(10, n + 1); else if (moves > n * 2.8) B.pairs = Math.max(5, n - 1);
+        finish(`Alle ${n} Paare in ${moves} Zügen gefunden!${good ? ' Hervorragendes Gedächtnis – beim nächsten Mal wird es noch kniffliger.' : ''}`);
       }
     } else {
       lock = true;
-      setTimeout(() => { open.forEach(x => el.querySelector(`[data-k="${x}"]`).classList.remove('open')); open = []; lock = false; }, 1300);
+      setTimeout(() => { open.forEach(x => el.querySelector(`[data-k="${x}"]`).classList.remove('open')); open = []; lock = false; }, 1500);
     }
   });
 }
@@ -832,7 +946,8 @@ const mk = {
 };
 const orderable = p => { const n = words(p.en).length; return n>=4 && n<=9; };
 function buildLesson(L){
-  const ph = shuffle(L.phrases.slice()); const P = L.phrases;
+  const nat = shuffle(L.phrases.filter(p => NATIVE[p.en])), rest = shuffle(L.phrases.filter(p => !NATIVE[p.en]));
+  const P = L.phrases, ph = [rest.shift() || nat.shift(), ...[...nat, ...rest]];  // ph[1] und ph[2] sind die Hörsätze
   const ord = shuffle(P.filter(orderable))[0] || ph[0];
   const ex = [mk.meaning(ph[0],P), mk.listen(ph[1],P)];
   L.gaps.forEach((g,i) => { ex.push(mk.gap(g)); if (L.replies[i]) ex.push(mk.reply(L.replies[i])); });
@@ -871,13 +986,17 @@ function renderEx(){
   const back = 'home';
   let body = '';
   const optsHtml = () => `<div class="opts">${e.options.map(o => `<button class="opt" data-val="${esc(o)}">${esc(N(o))}</button>`).join('')}</div>`;
-  if (e.type==='meaning') body = `<div class="prompt"><div class="en">${esc(N(e.en))}</div><div class="row"><button class="say primary" data-say="${esc(e.en)}">🔊 Anhören</button><button class="say" data-say-slow="${esc(e.en)}">🐢 Langsam</button></div></div>` + optsHtml();
-  else if (e.type==='listen') body = `<div class="bigplay"><button class="circle" data-say="${esc(e.en)}" aria-label="Anhören">🔊</button><button class="say" style="flex:none;padding:0 22px" data-say-slow="${esc(e.en)}">🐢 Langsam anhören</button></div><div style="height:12px"></div>` + optsHtml();
+  if (e.type==='meaning') body = `<div class="prompt"><div class="en">${glN(e.en)}</div><div class="row"><button class="say primary" data-say="${esc(e.en)}">🔊 Anhören</button><button class="say" data-say-slow="${esc(e.en)}">🐢 Langsam</button></div></div>` + optsHtml();
+  else if (e.type==='listen'){
+    const nat = NATIVE[e.en];
+    body = `<div class="bigplay"><button class="circle" ${nat ? `data-native="${esc(nat.f)}"` : `data-say="${esc(e.en)}"`} aria-label="Anhören">🔊</button><button class="say" style="flex:none;padding:0 22px" data-say-slow="${esc(e.en)}">🐢 Langsam anhören</button>
+      ${nat ? `<div class="muted small">🎙️ Echte Stimme: ${esc(nat.by)} · Tatoeba (${esc(nat.lic)})</div>` : ''}</div><div style="height:12px"></div>` + optsHtml();
+  }
   else if (e.type==='deen') body = `<div class="prompt"><div class="en">${esc(N(e.de))}</div></div>` + optsHtml();
-  else if (e.type==='gap') body = `<div class="prompt"><div class="en">${esc(N(e.en)).replace('___','<span class="gapword">?</span>')}</div><div class="de">${esc(N(e.de))}</div></div>` + optsHtml();
-  else if (e.type==='reply') body = `<div class="prompt"><div class="muted small" style="font-weight:700">Jemand sagt zu dir:</div><div class="en">„${esc(N(e.q))}“</div><div class="de" hidden id="qde">${esc(N(e.qde))}</div><div class="row"><button class="say primary" data-say="${esc(e.q)}" data-other="1">🔊 Anhören</button><button class="say" data-act="showqde">🇩🇪 Übersetzung</button></div></div>` + optsHtml();
+  else if (e.type==='gap') body = `<div class="prompt"><div class="en">${glN(e.en).replace('___','<span class="gapword">?</span>')}</div><div class="de">${esc(N(e.de))}</div></div>` + optsHtml();
+  else if (e.type==='reply') body = `<div class="prompt"><div class="muted small" style="font-weight:700">Jemand sagt zu dir:</div><div class="en">„${glN(e.q)}“</div><div class="de" hidden id="qde">${esc(N(e.qde))}</div><div class="row"><button class="say primary" data-say="${esc(e.q)}" data-other="1">🔊 Anhören</button><button class="say" data-act="showqde">🇩🇪 Übersetzung</button></div></div>` + optsHtml();
   else if (e.type==='odd') body = optsHtml();
-  else if (e.type==='storyq') body = `<div class="prompt"><div class="muted small" style="font-weight:700">📖 ${esc(e.title)}</div><div class="en">${esc(e.q)}</div></div>` + optsHtml();
+  else if (e.type==='storyq') body = `<div class="prompt"><div class="muted small" style="font-weight:700">📖 ${esc(e.title)}</div><div class="en">${gl(e.q)}</div></div>` + optsHtml();
   else if (e.type==='polite') body = `<div class="prompt"><div class="en" style="font-family:inherit;font-size:1.1rem">${esc(e.ask)}</div></div>` + optsHtml();
   else if (e.type==='order'){
     if (!e.bank){ const w = words(e.en); let s; do { s = shuffle(w.map((t,k)=>({t,k}))); } while (w.length>1 && s.every((x,k)=>x.k===k)); e.bank = s; }
@@ -888,12 +1007,12 @@ function renderEx(){
   } else if (e.type==='recall') body = `<div class="prompt"><div class="en">${esc(N(e.de))}</div></div><div id="recallArea"><div class="two"><button class="btn secondary" id="recMic">🎙️ Sprechen</button><button class="btn" id="revealBtn">Lösung zeigen</button></div><div id="recRes"></div></div>`;
   $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="${back}" aria-label="Beenden">✕</button><div class="progress"><i style="width:${pct}%"></i></div></div>
     <div class="ask">${e.type==='polite' ? 'Welcher Satz passt?' : ASK[e.type]}</div>${body}`;
-  if (e.type==='listen') setTimeout(()=>speak(e.en), 250);
+  if (e.type==='listen') setTimeout(() => NATIVE[e.en] ? playUrl('audio/native/' + NATIVE[e.en].f) : speak(e.en), 250);
   if (e.type==='order') bindOrder(e);
   if (e.type==='recall'){
     const reveal = () => {
       speak(e.en);
-      document.getElementById('recallArea').innerHTML = `<div class="prompt"><div class="en">${esc(N(e.en))}</div><div class="row"><button class="say primary" data-say="${esc(e.en)}">🔊 Nochmal</button><button class="say" data-say-slow="${esc(e.en)}">🐢 Langsam</button></div></div>
+      document.getElementById('recallArea').innerHTML = `<div class="prompt"><div class="en">${glN(e.en)}</div><div class="row"><button class="say primary" data-say="${esc(e.en)}">🔊 Nochmal</button><button class="say" data-say-slow="${esc(e.en)}">🐢 Langsam</button></div></div>
         <div id="recRes2"></div><p class="muted" style="margin:0 4px 12px">Hattest du es gewusst?</p>
         <div class="two"><button class="btn secondary" id="noBtn">Noch nicht ganz</button><button class="btn" id="yesBtn">Ja, gewusst! 👍</button></div>`;
       document.getElementById('yesBtn').onclick = () => answer(true, e, {silent:true});
@@ -1094,6 +1213,9 @@ function renderSettings(){
       <p style="margin:0">${isStandalone() ? '✓ Die App ist installiert. Lektionen funktionieren ohne Internet; Sprechprüfung und KI-Gespräch brauchen Internet.' : installHow()}</p>
       ${!isStandalone() && installEvent ? '<button class="btn" data-act="install">Jetzt installieren</button>' : ''}
       <p class="muted small" style="margin:0">Dein Lernstand wird nur auf diesem Gerät gespeichert.</p></div>
+    <div class="card stack"><h3>Quellen & Lizenzen</h3><p class="muted small" style="margin:0">
+      Echte Stimmen in den Hörübungen: Aufnahmen von Tatoeba-Sprechern (vor allem „CK“), <a href="https://tatoeba.org" target="_blank" rel="noopener">tatoeba.org</a>, Lizenz CC BY-NC-ND 3.0 – unverändert und nur nicht-kommerziell genutzt.
+      Übrige Sprachausgabe: Kokoro (Apache 2.0). Schriften: Atkinson Hyperlegible und Fraunces (SIL Open Font License). Videos: jeweilige YouTube-Kanäle.</p></div>
     <div class="card stack"><h3>Fortschritt</h3><div id="resetArea"><button class="btn secondary" id="resetBtn">Fortschritt zurücksetzen</button></div></div></div>`;
   const nameIn = document.getElementById('nameIn'); nameIn.onchange = nameIn.onblur = () => { state.name = nameIn.value.trim(); save(); };
   const srv = document.getElementById('srvIn'), code = document.getElementById('codeIn');
@@ -1127,6 +1249,7 @@ document.addEventListener('click', ev => {
   if (t.dataset.say !== undefined){ speak(t.dataset.say, {other: !!t.dataset.other}); return; }
   if (t.dataset.saySlow !== undefined){ speak(t.dataset.saySlow, {slow:true}); return; }
   if (t.dataset.playurl){ playUrl(t.dataset.playurl); return; }
+  if (t.dataset.native){ playUrl('audio/native/' + t.dataset.native); return; }
   if (t.dataset.testaudio){ playTestAudio(t.dataset.testaudio); return; }
   if (t.dataset.testans !== undefined){ if (testAudio) try{testAudio.pause();}catch(e){} testRun.ans[testRun.i] = parseInt(t.dataset.testans); testRun.i++; renderTest(); window.scrollTo(0,0); return; }
   if (t.dataset.go){ const [n,id] = t.dataset.go.split(':'); if (n === 'chat' && view.name === 'chat') chat = null; go(id ? {name:n, id} : {name:n}); return; }
@@ -1136,6 +1259,7 @@ document.addEventListener('click', ev => {
     if (a==='open') go({name:'hub', id});
     else if (a==='continue'){ const c = current(); enterStep(c.L.id, c.step); }
     else if (a==='nextstep' && L) nextStep(L, id);
+    else if (a==='wordnext' && L){ const k = view.k || 0; if (k < wordsOf(L).length - 1){ stopSpeech(); view = {name:'words', id:L.id, k:k+1}; render(); window.scrollTo(0,0); } else nextStep(L, 'words'); }
     else if (a==='phrasenext' && L){ const k = view.k || 0; if (k < L.phrases.length - 1){ stopSpeech(); if (Rec.active) Rec.stop(); view = {name:'phrases', id:L.id, k:k+1}; render(); window.scrollTo(0,0); } else nextStep(L, 'phrases'); }
     else if (a==='review') startReview();
     else if (a==='again') startLesson(run.id);
