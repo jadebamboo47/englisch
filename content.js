@@ -1272,4 +1272,33 @@ OLD.forEach(l => { l.stage = 0; });
 const OTHER_GENDER = {Mary:'f', Schalter:'m', Rezeption:'f', Kellner:'m', Passant:'m', 'Verkäuferin':'f', Apotheker:'m', Kasse:'f', Tom:'m'};
 OLD.forEach(l => { l.other = OTHER_GENDER[l.dialog.find(d => d.who !== 'me').who] || 'm'; });
 const LESSONS = [...S1, ...S2, ...S3, ...OLD];
+
+/* Passende Videos (nur mit Internet). [YouTube-ID, Titel, Kanal/Art] */
+const VIDEOS = {
+  umbuchen:["NPYWTkPj5bM","Airport check-in: the flight is cancelled","Gesprächsübung"],
+  hotelproblem:["X7nDkvYSbfs","Complaining – English at Work","BBC Learning English"],
+  essengehen:["ReBTlHSN1dw","The Vocabulary Show: Dining out","BBC Learning English"],
+  tagestour:["M2BDAJny8FM","Red Cruise on Lake Windermere (Bowness ⇄ Ambleside)","Windermere Lake Cruises"],
+  arzt:["bhifVJNYe5E","How to communicate at the doctor's office","Gesprächsübung"],
+  zugausfall:["JD0N2r5JThk","British English conversation: at the train station","Gesprächsübung"],
+  umtausch:["AieyshkY3gk","Requesting a refund","Gesprächsübung"],
+  reisebekannte:["HRjIzEmaKVs","What does 'small talk' mean?","BBC Learning English"],
+  erinnerungen:["uTB5I8V9Eog","Past simple and past continuous – 6 Minute Grammar","BBC Learning English"],
+  meinung:["quCnnKUntnM","How do you disagree with people?","BBC Learning English"],
+  enkel:["foyWhOHhTT0","Question tags – 6 Minute Grammar","BBC Learning English"],
+  technik:["RTAwB-5Fv48","Technology: phrasal verbs with Georgie","BBC Learning English"],
+  einladung:["TEvVf-Tle7k","British dinner party traditions","Englisch-Lernvideo"],
+  telefonieren:["yzPX6zmaBdg","Talking on the phone – English at Work","BBC Learning English"],
+  wohlbefinden:["3tMcJQTguiM","Modals for giving advice","Englisch-Lernvideo"],
+  zukunft:["jcAX1RtKq3U","Talking about the future – 6 Minute Grammar","BBC Learning English"],
+  tee:["qzO3CjqQFY8","Historian Kate Williams on the invention of afternoon tea","Kurzdoku"],
+  redewendungen:["H-DLA6AOJ6Q","BBC Weather presenters teach you weather expressions","BBC Learning English"],
+  nachrichten:["L-wTVCByxzk","Reported speech – 6 Minute Grammar","BBC Learning English"],
+  wennich:["3OuqzHxlrHc","The second conditional – 6 Minute Grammar","BBC Learning English"],
+  edinburgh:["6_5nY9aFQKc","A walk along the Royal Mile, Edinburgh","Reisevideo"],
+  garten:["0qQ_4OH0LOA","Roses in June at Sissinghurst Castle Garden","Gartenvideo"],
+  britisch:["3NM72kTE2oQ","How to be polite in English","BBC Learning English"],
+  reklamation:["0VPwGqiWT04","Are you good at complaining? – 6 Minute English","BBC Learning English"]
+};
+LESSONS.forEach(l => { if (VIDEOS[l.id]) l.video = {id:VIDEOS[l.id][0], t:VIDEOS[l.id][1], src:VIDEOS[l.id][2]}; });
 if (typeof module !== 'undefined') module.exports = {STAGES, LESSONS};

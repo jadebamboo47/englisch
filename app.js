@@ -196,8 +196,8 @@ function bar(title, back='home', right=''){
 }
 function render(){
   if (!state.onboarded) return renderWelcome();
-  ({test:renderTest, testreview:renderTestReview, home:renderHome, hub:renderHub, phrases:renderPhrases, play:renderPlay,
-    tip:renderTip, ex:renderEx, done:renderDone, settings:renderSettings, chat:renderChat}[view.name] || renderHome)();
+  ({all:renderAll, test:renderTest, testreview:renderTestReview, home:renderHome, hub:renderHub, phrases:renderPhrases, play:renderPlay,
+    tip:renderTip, video:renderVideo, ex:renderEx, done:renderDone, settings:renderSettings, chat:renderChat}[view.name] || renderHome)();
 }
 
 /* ---------- Willkommen ---------- */
@@ -364,38 +364,60 @@ function greeting(){ const h = new Date().getHours(); return h<11 ? 'Guten Morge
 function lessonsOf(n){ return LESSONS.filter(l => l.stage === n); }
 function nextLesson(){ for (const st of STAGES.filter(s => s.n > 0)) { const l = lessonsOf(st.n).find(x => !state.done[x.id]); if (l) return l; } return null; }
 
+/* ---------- Geführter Ablauf ---------- */
+function stepsOf(L){ return ['phrases','play', ...(L.tip ? ['tip'] : []), 'ex']; }
+const STEP_NAMES = {phrases:'Neue Wendungen', play:'Gespräch mitspielen', tip:'Kurz erklärt', ex:'Üben'};
+function current(){
+  const c = state.cur; const L = c && byId(c.id);
+  if (L && stepsOf(L).includes(c.step)) return {L, step:c.step};
+  return {L: nextLesson() || lessonsOf(1)[0], step:'phrases'};
+}
+function setCur(id, step){ state.cur = {id, step}; save(); }
+function enterStep(id, step){
+  setCur(id, step);
+  if (step === 'ex') return startLesson(id);
+  if (step === 'play') play = null;
+  go(step === 'phrases' ? {name:'phrases', id, k:0} : {name:step, id});
+}
+function nextStep(L, step){ const s = stepsOf(L); enterStep(L.id, s[s.indexOf(step) + 1] || 'ex'); }
+function lessonAfter(L){ const order = STAGES.filter(s => s.n > 0).flatMap(s => lessonsOf(s.n)); const i = order.indexOf(L); return order.slice(i+1).find(x => !state.done[x.id]) || nextLesson(); }
+
+/* ---------- Startseite: ein Ziel, ein Knopf ---------- */
 function renderHome(){
-  const dp = dailyPhrase(); const next = nextLesson();
-  const doneCount = LESSONS.filter(l => l.stage > 0 && state.done[l.id]).length;
+  const {L, step} = current();
+  const steps = stepsOf(L); const si = steps.indexOf(step);
+  const order = STAGES.filter(s => s.n > 0).flatMap(s => lessonsOf(s.n));
+  const num = order.indexOf(L) + 1;
+  const started = si > 0;
+  $app.innerHTML = `
+    <div class="bar"><div class="spacer"></div><div class="title"></div><button class="iconbtn gear" data-go="settings" aria-label="Einstellungen und mehr">⚙︎</button></div>
+    <div class="hello" style="margin-top:4px"><h1>${greeting()}, ${esc(nm())}!</h1>
+      <p class="muted">${started ? 'Schön, dass du wieder da bist. Hier geht es weiter:' : 'Deine heutige Lektion:'}</p></div>
+    <div class="todaycard">
+      <div class="ico">${L.icon}</div>
+      <div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em">Lektion ${num} von ${order.length}</div>
+      <h2>${esc(L.title)}</h2>
+      <div class="dots">${steps.map((s,i) => `<span class="${i < si ? 'past' : i === si ? 'now' : ''}"></span>`).join('')}</div>
+      <div class="muted">Schritt ${si+1} von ${steps.length}: <b>${STEP_NAMES[step]}</b></div>
+    </div>
+    <button class="btn huge" data-act="continue">▶︎ ${started ? 'Weitermachen' : 'Los geht’s'}</button>
+    ${installBanner() ? '<div style="height:18px"></div>' + installBanner() : ''}`;
+}
+
+/* ---------- Alle Lektionen (über ⚙︎ erreichbar) ---------- */
+function renderAll(){
+  const next = nextLesson();
   const lessonBtn = (l, i) => {
     const n = state.done[l.id] || 0;
     const badge = n ? `<span class="badge ok">✓ ${n}×</span>` : (next && next.id===l.id ? '<span class="badge next">Als Nächstes</span>' : '<span class="badge">Neu</span>');
     return `<button class="lesson" data-act="open:${l.id}"><div class="ico">${l.icon}</div>
       <div class="txt"><b>${i+1}. ${esc(l.title)}</b><span>${esc(l.en)}</span></div>${badge}</button>`;
   };
-  $app.innerHTML = `
-    <div class="bar"><div class="spacer"></div><div class="title"></div><button class="iconbtn" data-go="settings">⚙︎ Einstellungen</button></div>
-    <div class="hello"><h1>${greeting()}, ${esc(nm())}!</h1>
-      <p class="muted">${state.placement ? 'Dein Niveau: <b>' + esc(state.placement.level) + '</b> · ' : ''}${doneCount ? `${doneCount} Lektionen geschafft.` : 'Schön, dass du da bist.'}</p></div>
-    <div style="height:12px"></div>${installBanner()}
-    <div class="two" style="margin-bottom:14px">
-      <button class="tile" data-act="${next ? 'open:'+next.id : 'review'}"><div class="big">${next ? next.icon : '🌟'}</div>
-        <div><b>${next ? 'Weiterlernen' : 'Alles geschafft!'}</b><br><span>${next ? esc(next.title) : 'Jetzt wiederholen'}</span></div></button>
-      <button class="tile" data-act="chatopen"><div class="big">🗣️</div>
-        <div><b>Mit der KI sprechen</b><br><span>${state.server && state.code ? 'Freies Gespräch mit Korrekturen' : 'Noch einzurichten'}</span></div></button>
-    </div>
-    <div class="daily"><div class="lab">Satz des Tages</div><div class="en">${esc(N(dp.en))}</div><div class="de">${esc(N(dp.de))}</div>
-      <div class="row"><button class="pill" data-say="${esc(dp.en)}">🔊 Anhören</button><button class="pill" data-say-slow="${esc(dp.en)}">🐢 Langsam</button></div></div>
-    <div class="two" style="margin-top:14px">
-      <button class="tile" data-act="review"><div class="big">🧠</div><div><b>Kopftraining</b><br><span>${doneCount ? 'Gelerntes gemischt wiederholen' : 'Nach der ersten Lektion'}</span></div></button>
-      <button class="tile" data-act="testopen"><div class="big">🎯</div><div><b>Einstufungstest</b><br><span>${state.placement ? 'Ergebnis: ' + esc(state.placement.level) : '24 Fragen · 10 Min.'}</span></div></button>
-    </div>
-    ${STAGES.map(st => {
+  $app.innerHTML = bar('Alle Lektionen', 'settings') + STAGES.map(st => {
       const ls = lessonsOf(st.n); const d = ls.filter(l => state.done[l.id]).length;
-      return `<div class="sectionhead"><div><h2>${st.n ? 'Stufe ' + st.n + ': ' : ''}${esc(st.title)}</h2><span class="muted small">${esc(st.level)} · ${esc(st.sub)}</span></div>${ls.length ? `<span class="muted small">${d}/${ls.length}</span>` : ''}</div>
-        ${ls.length ? (st.n === 0 && !state.showBasics ? `<button class="btn secondary" data-act="basics">Grundlagen anzeigen (${ls.length} Lektionen)</button>` : ls.map(lessonBtn).join(''))
-          : '<div class="card muted">In Vorbereitung.</div>'}`;
-    }).join('')}`;
+      return `<div class="sectionhead"><div><h2>${st.n ? 'Stufe ' + st.n + ': ' : ''}${esc(st.title)}</h2><span class="muted small">${esc(st.level)} · ${esc(st.sub)}</span></div><span class="muted small">${d}/${ls.length}</span></div>
+        ${ls.map(lessonBtn).join('')}`;
+    }).join('');
 }
 
 /* ---------- Lektions-Übersicht ---------- */
@@ -403,29 +425,57 @@ function renderHub(){
   const L = byId(view.id);
   const st = STAGES.find(s => s.n === L.stage);
   const steps = [
-    ['phrases', 'Wichtige Wendungen', 'Anhören, nachsprechen, Aussprache prüfen'],
+    ['phrases', 'Neue Wendungen', 'Hören, raten, antippen – und nachsprechen'],
     ['play', 'Gespräch mitspielen', L.scene],
     ...(L.tip ? [['tip', 'Kurz erklärt', L.tip.t]] : []),
-    ['ex', 'Üben', 'Fragen und Antworten zum Antippen']];
-  $app.innerHTML = bar(st ? st.title : 'Lektion') + `
+    ['ex', 'Üben', 'Fragen und Antworten zum Antippen'],
+    ...(L.video ? [['video', '🎬 Video (mit Internet)', L.video.t]] : [])];
+  $app.innerHTML = bar(st ? st.title : 'Lektion', 'all') + `
     <div class="hubhead" style="margin:8px 4px 22px"><div class="ico">${L.icon}</div>
       <div><h1>${esc(L.title)}</h1><div class="muted">${esc(L.en)}${st ? ' · ' + esc(st.level) : ''}</div></div></div>
     ${steps.map((s,i) => `<button class="step" data-go-to="${s[0]}"><div class="num">${i+1}</div><div><b>${s[1]}</b><span>${esc(s[2])}</span></div></button>`).join('')}
     <div style="margin-top:22px"><button class="btn" data-go-to="phrases">Lektion starten</button></div>`;
 }
 
-/* ---------- Schritt 1: Wendungen + Sprechtrainer ---------- */
+/* ---------- Schritt 1: Neue Wendungen – hören, raten, antippen ---------- */
 function renderPhrases(){
-  const L = byId(view.id);
-  $app.innerHTML = bar('Wichtige Wendungen', 'hub:'+L.id) + `
-    <p class="muted" style="margin:0 4px 16px">Anhören, laut nachsprechen – und mit <b>🎙️ Sprechen</b> prüfen, ob man dich versteht.</p>
-    ${L.phrases.map((p,k) => `<div class="phrase" id="ph${k}">
-      <div class="en">${esc(N(p.en))}</div><div class="de">${esc(N(p.de))}</div>
-      <div class="row"><button class="say primary" data-say="${esc(p.en)}">🔊 Anhören</button><button class="say" data-say-slow="${esc(p.en)}">🐢 Langsam</button>
-        <button class="say mic" data-mic="${k}">🎙️ Sprechen</button></div>
-      <div class="speakres" id="sr${k}"></div></div>`).join('')}
-    <div style="margin-top:22px"><button class="btn" data-go-to="play">Weiter: Gespräch mitspielen ›</button></div>`;
-  $app.querySelectorAll('[data-mic]').forEach(b => b.onclick = () => speakCheck(L.phrases[+b.dataset.mic].en, b, document.getElementById('sr'+b.dataset.mic)));
+  const L = byId(view.id); const k = view.k || 0; const p = L.phrases[k];
+  const last = k === L.phrases.length - 1;
+  const toDe = k % 2 === 0;                      // abwechselnd: Englisch → Deutsch / Deutsch → Englisch
+  if (!view.opts) view.opts = toDe ? options(p.de, L.phrases.map(x => x.de)) : options(p.en, L.phrases.map(x => x.en));
+  const answer = toDe ? p.de : p.en;
+  $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="home">⌂ Start</button><div class="progress"><i style="width:${Math.round(k / L.phrases.length * 100)}%"></i></div><div class="muted small" style="min-width:64px;text-align:right">${k+1}/${L.phrases.length}</div></div>
+    <div class="ask">${toDe ? 'Hör zu: Was bedeutet das?' : 'Wie sagt man das auf Englisch?'}</div>
+    <div class="phrase big">
+      ${toDe ? `<div class="en">${esc(N(p.en))}</div>` : `<div class="en" style="font-family:inherit">${esc(N(p.de))}</div>`}
+      ${toDe ? `<div class="row"><button class="say primary" data-say="${esc(p.en)}">🔊 Nochmal</button><button class="say" data-say-slow="${esc(p.en)}">🐢 Langsam</button></div>` : ''}
+    </div>
+    <div class="opts" id="phOpts">${view.opts.map(o => `<button class="opt" data-ph="${esc(o)}">${esc(N(o))}</button>`).join('')}</div>
+    <div id="phAfter"></div>`;
+  const after = () => {
+    view.answered = true;
+    document.getElementById('phAfter').innerHTML = `
+      <div class="phrase" style="margin-top:16px"><div class="en">${esc(N(p.en))}</div><div class="de">${esc(N(p.de))}</div>
+        <div class="row"><button class="say primary" data-say="${esc(p.en)}">🔊 Anhören</button><button class="say mic" id="micBtn">🎙️ Nachsprechen</button></div>
+        <div class="speakres" id="sr"></div></div>
+      <div style="height:110px"></div>
+      <div class="stickynext"><div class="inner"><button class="btn huge" data-act="phrasenext">${last ? 'Weiter zum Gespräch ›' : 'Weiter ›'}</button></div></div>`;
+    document.getElementById('micBtn').onclick = () => speakCheck(p.en, document.getElementById('micBtn'), document.getElementById('sr'));
+    speak(p.en);
+  };
+  document.querySelectorAll('[data-ph]').forEach(b => b.onclick = () => {
+    if (view.answered) return;
+    const ok = b.dataset.ph === answer;
+    if (ok){
+      document.querySelectorAll('[data-ph]').forEach(o => { o.disabled = true; if (o.dataset.ph === answer) o.classList.add('right'); else o.classList.add('dim'); });
+      toast(pickOne(PRAISE)); after();
+    } else {
+      b.classList.add('wrong'); b.disabled = true; state.miss[p.en] = (state.miss[p.en]||0) + 1; save();
+      if (document.querySelectorAll('[data-ph]:not([disabled])').length <= 1){ document.querySelectorAll('[data-ph]').forEach(o => { o.disabled = true; if (o.dataset.ph === answer) o.classList.add('right'); }); after(); }
+      else toast('Nicht ganz – versuch es noch einmal.');
+    }
+  });
+  if (toDe) setTimeout(() => speak(p.en), 300);
 }
 let lastBlobUrl = null;
 async function speakCheck(target, btn, out){
@@ -477,7 +527,7 @@ function myAlternatives(L, k){
 function renderPlay(){
   const L = byId(view.id);
   if (!play || play.id !== L.id) play = {id:L.id, k:0, shown:[], mistakes:0, phase:'dialog', qi:0, compOk:0};
-  $app.innerHTML = bar('Gespräch mitspielen', 'hub:'+L.id) + `
+  $app.innerHTML = bar('Gespräch mitspielen', 'home') + `
     <div class="scene"><b>Die Situation:</b> ${esc(L.scene)}</div>
     <div class="bubbles" id="bubbles"></div><div id="playArea" style="margin-top:18px"></div>`;
   play.shown.forEach(k => addBubble(L, k, false));
@@ -545,9 +595,8 @@ async function stepPlay(L){
   area.innerHTML = `<div class="card stack" style="text-align:center"><div style="font-size:2.4rem">🎭</div>
     <h2>Gespräch geschafft!</h2><p class="muted" style="margin:0">${play.mistakes === 0 ? 'Alle Antworten auf Anhieb richtig – wunderbar!' : 'Gut gemacht – Übung macht den Meister.'}${L.comp ? ` Verständnis: ${play.compOk} von ${L.comp.length}.` : ''}</p></div>
     <div class="stack" style="margin-top:14px">
-      <button class="btn" data-go-to="${L.tip ? 'tip' : 'ex'}">Weiter: ${L.tip ? 'Kurz erklärt' : 'Üben'} ›</button>
-      <button class="btn secondary" data-act="playall">▶︎ Ganzes Gespräch anhören</button>
-      <button class="btn ghost" data-act="playagain">Nochmal mitspielen</button></div>`;
+      <button class="btn huge" data-act="nextstep:play">Weiter: ${L.tip ? 'Kurz erklärt' : 'Üben'} ›</button>
+      <button class="btn ghost" data-act="playall">▶︎ Ganzes Gespräch noch einmal anhören</button></div>`;
 }
 async function playAll(L){
   stopSpeech(); const tok = speakToken; const bubs = [...document.querySelectorAll('#bubbles .bub')];
@@ -560,11 +609,25 @@ async function playAll(L){
 /* ---------- Schritt 3: Kurz erklärt ---------- */
 function renderTip(){
   const L = byId(view.id); const t = L.tip;
-  $app.innerHTML = bar('Kurz erklärt', 'hub:'+L.id) + `
+  $app.innerHTML = bar('Kurz erklärt', 'home') + `
     <div class="tipcard"><div class="tiphead">💡 ${esc(t.t)}</div><p>${esc(t.d)}</p></div>
     ${t.ex.map(e => `<div class="phrase"><div class="en">${esc(e[0])}</div><div class="de">${esc(e[1])}</div>
       <div class="row"><button class="say primary" data-say="${esc(e[0])}">🔊 Anhören</button></div></div>`).join('')}
-    <div style="margin-top:22px"><button class="btn" data-go-to="ex">Weiter: Üben ›</button></div>`;
+    <div style="margin-top:22px"><button class="btn huge" data-act="nextstep:tip">Weiter: Üben ›</button></div>`;
+}
+
+/* ---------- Video (nur mit Internet) ---------- */
+function renderVideo(){
+  const L = byId(view.id); const v = L.video;
+  const online = navigator.onLine;
+  $app.innerHTML = bar('Video', 'hub:'+L.id) + `
+    <div class="card stack"><div><b>${esc(v.t)}</b><div class="muted small">${esc(v.src)} · Englisch mit Untertiteln</div></div>
+    ${online ? `<div class="videobox"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?rel=0&playsinline=1&cc_load_policy=1&cc_lang_pref=en&hl=en&modestbranding=1" title="${esc(v.t)}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>
+      <p class="muted small" style="margin:0">Tipp: Mit dem Zahnrad im Video kannst du die Geschwindigkeit verringern (z. B. 0,75). Falls das Video hier nicht startet:</p>
+      <a class="btn secondary" href="https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}" target="_blank" rel="noopener">Auf YouTube öffnen</a>`
+    : '<p style="margin:0">📶 Für Videos brauchst du Internet. Alles andere in der Lektion funktioniert auch ohne.</p>'}
+    </div>
+    <div style="margin-top:22px"><button class="btn" data-go="hub:${L.id}">Zurück zur Lektion</button></div>`;
 }
 
 /* ============================================================
@@ -619,7 +682,7 @@ function renderEx(){
   if (!run) return go({name:'home'});
   const e = run.queue[run.i];
   const pct = Math.round(run.i / run.queue.length * 100);
-  const back = run.mode==='lesson' ? 'hub:'+run.id : 'home';
+  const back = 'home';
   let body = '';
   const optsHtml = () => `<div class="opts">${e.options.map(o => `<button class="opt" data-val="${esc(o)}">${esc(N(o))}</button>`).join('')}</div>`;
   if (e.type==='meaning') body = `<div class="prompt"><div class="en">${esc(N(e.en))}</div><div class="row"><button class="say primary" data-say="${esc(e.en)}">🔊 Anhören</button><button class="say" data-say-slow="${esc(e.en)}">🐢 Langsam</button></div></div>` + optsHtml();
@@ -706,25 +769,22 @@ function answer(ok, e, o={}){
 function hideFb(){ const fb=document.getElementById('fb'); if (fb) fb.className='feedback'; }
 function next(){
   hideFb(); stopSpeech(); run.i++;
-  if (run.i >= run.queue.length){ if (run.mode==='lesson'){ state.done[run.id] = (state.done[run.id]||0)+1; save(); } return go({name:'done'}); }
+  if (run.i >= run.queue.length){ if (run.mode==='lesson'){ state.done[run.id] = (state.done[run.id]||0)+1; const nx = lessonAfter(byId(run.id)); if (nx) setCur(nx.id, 'phrases'); else state.cur = null; save(); } return go({name:'done'}); }
   renderEx(); window.scrollTo(0,0);
 }
 
 /* ---------- Geschafft ---------- */
 function renderDone(){
   const L = run.mode==='lesson' ? byId(run.id) : null;
-  const sameStage = L ? lessonsOf(L.stage) : [];
-  const nextL = L ? sameStage[sameStage.indexOf(L)+1] || nextLesson() : null;
+  const nx = current().L;
   const ratio = run.firstTry / run.total;
   const msg = ratio >= .9 ? 'Ausgezeichnet – fast alles auf Anhieb richtig!' : ratio >= .6 ? 'Sehr ordentlich! Mit jeder Wiederholung wird es leichter.' : 'Gut gemacht, dass du drangeblieben bist. Morgen sitzt es schon besser.';
   $app.innerHTML = `<div class="done stack"><div class="emoji">${ratio>=.9 ? '🌟' : '🎉'}</div>
     <h1>${L ? 'Lektion geschafft!' : 'Kopftraining geschafft!'}</h1>
     <p style="font-size:1.1rem">${run.firstTry} von ${run.total} Aufgaben auf Anhieb richtig.</p><p class="muted">${msg}</p>
     <div class="stack" style="margin-top:26px;text-align:left">
-      ${nextL && nextL !== L ? `<button class="btn" data-act="open:${nextL.id}">Nächste Lektion: ${esc(nextL.title)} ›</button>` : ''}
-      ${L ? `<button class="btn secondary" data-act="again">Übungen nochmal machen</button>` : `<button class="btn" data-act="review">Noch eine Runde</button>`}
-      ${state.server && state.code ? `<button class="btn secondary" data-act="chatopen">🗣️ Jetzt mit der KI üben</button>` : ''}
-      <button class="btn ghost" data-go="home">Zur Übersicht</button></div></div>`;
+      <button class="btn huge" data-act="continue">Nächste Lektion: ${esc(nx.title)} ›</button>
+      <button class="btn ghost" data-go="home">Für heute Schluss</button></div></div>`;
 }
 
 /* ============================================================
@@ -825,7 +885,13 @@ async function sendChat(text){
 /* ---------- Einstellungen ---------- */
 function renderSettings(){
   const seg = (key, opts) => `<div class="seg ${opts.length===2?'two-c':''}">${opts.map(([v,l]) => `<button data-set="${key}" data-v="${v}" class="${String(state[key])===String(v)?'on':''}">${l}</button>`).join('')}</div>`;
-  $app.innerHTML = bar('Einstellungen') + `<div class="stack">
+  $app.innerHTML = bar('Einstellungen & mehr') + `<div class="stack">
+    <div class="card stack"><h3>Mehr</h3>
+      <button class="lesson" data-go="all"><div class="ico">📚</div><div class="txt"><b>Alle Lektionen</b><span>Lektionen frei auswählen, Videos</span></div></button>
+      <button class="lesson" data-act="review"><div class="ico">🧠</div><div class="txt"><b>Kopftraining</b><span>Gelerntes gemischt wiederholen</span></div></button>
+      <button class="lesson" data-act="chatopen"><div class="ico">🗣️</div><div class="txt"><b>Mit der KI sprechen</b><span>${state.server && state.code ? 'Freies Gespräch mit Korrekturen' : 'Noch einzurichten (siehe unten)'}</span></div></button>
+      <button class="lesson" data-act="testopen"><div class="ico">🎯</div><div class="txt"><b>Einstufungstest</b><span>${state.placement ? 'Letztes Ergebnis: ' + esc(state.placement.level) : '24 Fragen · 10 Min.'}</span></div></button>
+    </div>
     <div class="card stack"><label class="field" for="nameIn">Dein Vorname</label><input id="nameIn" class="text" type="text" value="${esc(state.name)}" placeholder="z. B. Maria"></div>
     <div class="card stack"><h3>Schriftgröße</h3>${seg('scale',[[1,'Normal'],[1.15,'Groß'],[1.3,'Sehr groß']])}</div>
     <div class="card stack"><h3>Sprechtempo</h3>${seg('rate',[[0.7,'Langsam'],[0.9,'Normal']])}</div>
@@ -876,10 +942,13 @@ document.addEventListener('click', ev => {
   if (t.dataset.testaudio){ playTestAudio(t.dataset.testaudio); return; }
   if (t.dataset.testans !== undefined){ if (testAudio) try{testAudio.pause();}catch(e){} testRun.ans[testRun.i] = parseInt(t.dataset.testans); testRun.i++; renderTest(); window.scrollTo(0,0); return; }
   if (t.dataset.go){ const [n,id] = t.dataset.go.split(':'); if (n === 'chat' && view.name === 'chat') chat = null; go(id ? {name:n, id} : {name:n}); return; }
-  if (t.dataset.goTo){ const id = view.id; if (t.dataset.goTo==='ex') return startLesson(id); if (t.dataset.goTo==='play') play = null; go({name:t.dataset.goTo, id}); return; }
+  if (t.dataset.goTo){ const id = view.id; if (['phrases','play','tip','ex'].includes(t.dataset.goTo)) return enterStep(id, t.dataset.goTo); go({name:t.dataset.goTo, id}); return; }
   if (t.dataset.act){
     const [a,id] = t.dataset.act.split(':'); const L = view.id ? byId(view.id) : null;
     if (a==='open') go({name:'hub', id});
+    else if (a==='continue'){ const c = current(); enterStep(c.L.id, c.step); }
+    else if (a==='nextstep' && L) nextStep(L, id);
+    else if (a==='phrasenext' && L){ const k = view.k || 0; if (k < L.phrases.length - 1){ stopSpeech(); if (Rec.active) Rec.stop(); view = {name:'phrases', id:L.id, k:k+1}; render(); window.scrollTo(0,0); } else nextStep(L, 'phrases'); }
     else if (a==='review') startReview();
     else if (a==='again') startLesson(run.id);
     else if (a==='basics'){ state.showBasics = true; save(); renderHome(); }
