@@ -1,5 +1,5 @@
 /* Offline-Speicher für „Englisch für unterwegs“ – automatisch erzeugt von tools/build_sw.py */
-const VERSION = '7fc75202';
+const VERSION = '0296b88c';
 const CACHE = 'englisch-' + VERSION;
 const ASSETS = [
   './',
@@ -19,6 +19,8 @@ const ASSETS = [
   './audio/arzt-bc709b6e53.mp3',
   './audio/ausflug-a32a4165a9.mp3',
   './audio/britisch-aad20b56cb.mp3',
+  './audio/bunt-b74e75be44.mp3',
+  './audio/bunt2-c41c00530c.mp3',
   './audio/edinburgh-7bdf18f964.mp3',
   './audio/einkaufen-07ce7f83e6.mp3',
   './audio/einladung-75db5ccf80.mp3',

@@ -171,6 +171,15 @@ async function speak(text, opts={}){
   if (!hasTTS && !(AIDX && AIDX.clips[text])) { toast('Für diesen Satz gibt es keine Aufnahme.'); return false; }
   return deviceSpeak(text, {...opts, slow});
 }
+async function playLines(lines, slow=false, mark=false){
+  stopSpeech(); const tok = speakToken;
+  for (let i = 0; i < lines.length; i++){
+    if (tok !== speakToken) return;
+    const sp = mark && document.querySelector(`#storyText [data-s="${i}"]`); if (sp) sp.classList.add('reading');
+    await speak(lines[i], {slow}); if (sp) sp.classList.remove('reading');
+    if (tok !== speakToken) return; await sleep(slow ? 500 : 300);
+  }
+}
 function stopSpeech(){ speakToken++; stopAudioOnly(); if (hasTTS) try { speechSynthesis.cancel(); } catch(e){} }
 
 /* ============================================================
@@ -270,7 +279,7 @@ function render(){
   hideGloss(); abortSR();
   if (!state.onboarded) return renderWelcome();
   ({warmup:renderWarmup, all:renderAll, test:renderTest, testreview:renderTestReview, home:renderHome, hub:renderHub, words:renderWords, phrases:renderPhrases, play:renderPlay,
-    tip:renderTip, video:renderVideo, ex:renderEx, done:renderDone, settings:renderSettings, chat:KI_ENABLED ? renderChat : renderHome}[view.name] || renderHome)();
+    tip:renderTip, video:renderVideo, between:renderBetween, rounddone:renderRoundDone, ex:renderEx, done:renderDone, settings:renderSettings, chat:KI_ENABLED ? renderChat : renderHome}[view.name] || renderHome)();
 }
 
 /* ---------- Willkommen ---------- */
@@ -469,13 +478,14 @@ function nextLesson(){ for (const st of STAGES.filter(s => s.n > 0)) { const l =
 
 /* ---------- Geführter Ablauf ---------- */
 function wordsOf(L){ return (typeof NEWWORDS !== 'undefined' && NEWWORDS[L.id] || []).filter(w => GL[w.toLowerCase().replace(/’/g,"'")]); }
-function stepsOf(L){ return ['warmup', ...(wordsOf(L).length ? ['words'] : []), 'phrases','play', 'ex']; }
+function stepsOf(L){ return [...(wordsOf(L).length ? ['words'] : []), 'phrases','play', 'ex']; }
 const STEP_NAMES = {warmup:'Kopf-fit', words:'Neue Wörter', phrases:'Neue Wendungen', play:'Gespräch mitspielen', tip:'Kurz erklärt', ex:'Üben'};
 function current(){
   const c = state.cur; const L = c && byId(c.id);
   if (L && c.step === 'tip') c.step = 'ex';            // „Kurz erklärt“ gibt es nicht mehr
+  if (L && c.step === 'warmup') c.step = stepsOf(L)[0]; // Kopf-fit gehört jetzt zur Tagesrunde
   if (L && stepsOf(L).includes(c.step)) return {L, step:c.step};
-  return {L: nextLesson() || lessonsOf(1)[0], step:'warmup'};
+  const nl = nextLesson() || lessonsOf(1)[0]; return {L: nl, step: stepsOf(nl)[0]};
 }
 function setCur(id, step){ state.cur = {id, step}; save(); }
 function enterStep(id, step){
@@ -484,27 +494,66 @@ function enterStep(id, step){
   if (step === 'play') play = null;
   go(step === 'phrases' || step === 'words' ? {name:step, id, k:0} : {name:step, id});
 }
-function nextStep(L, step){ const s = stepsOf(L); enterStep(L.id, s[s.indexOf(step) + 1] || 'ex'); }
+let freeMode = false;   // Lektion von Hand aus der Liste unter ⚙︎ gestartet: Tagesrunde nicht weiterschalten
+function nextStep(L, step){
+  if (freeMode){ const s = stepsOf(L); const nx = s[s.indexOf(step) + 1]; if (nx) return enterStep(L.id, nx); return go({name:'hub', id:L.id}); }
+  if (step !== 'warmup'){ const s = stepsOf(L); const nx = s[s.indexOf(step) + 1]; if (nx) setCur(L.id, nx); }
+  roundNext();
+}
+
+/* ---------- Tagesrunde: Kopf-fit · Neues · Bunt gemischt ---------- */
+const BLOCKS = ['warmup','neu','bunt'];
+const BLOCK_LABEL = {warmup:'🧠 Kopf-fit', neu:'✨ Neues', bunt:'🎲 Bunt gemischt'};
+const todayKey = () => new Date().toISOString().slice(0,10);
+function roundState(){ state.round = Object.assign({n:1, b:0}, state.round || {}); return state.round; }
+function blockText(b){
+  const {L, step} = current();
+  if (b === 'neu') return `✨ Neues: ${L.title} – ${STEP_NAMES[step]}`;
+  if (b === 'bunt') return `🎲 Bunt gemischt: Alltagsszenen, ${roundState().n % 2 ? 'Witze & Redewendungen' : 'eine Kurzgeschichte'}, Wiederholung`;
+  return '🧠 Kopf-fit: ' + GAME_INFO[gameForRound()].t;
+}
+function startBlock(){
+  freeMode = false;
+  const R = roundState(); const b = BLOCKS[R.b]; const {L, step} = current();
+  if (b === 'warmup') return go({name:'warmup', id:L.id});
+  if (b === 'neu') return enterStep(L.id, step);
+  startBunt();
+}
+function roundNext(){
+  const R = roundState(); R.b++;
+  if (R.b >= BLOCKS.length){ R.b = 0; R.n++; R.last = todayKey(); save(); return go({name:'rounddone'}); }
+  save(); go({name:'between'});
+}
+function roundList(R){
+  return `<div class="roundlist">${BLOCKS.map((b,i) => `<div class="ri ${i < R.b ? 'past' : i === R.b ? 'now' : ''}"><span class="ck">${i < R.b ? '✓' : i+1}</span><span>${esc(blockText(b))}</span></div>`).join('')}</div>`;
+}
+function renderBetween(){
+  const R = roundState();
+  $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="home">⌂ Start</button><div class="spacer"></div></div>
+    <div class="done stack" style="padding-top:10px"><div class="emoji">👍</div><h1>${pickOne(['Prima!','Sehr gut!','Weiter so!','Schön gemacht!'])}</h1>
+    ${roundList(R)}
+    <button class="btn huge" data-act="continue">Weiter: ${esc(BLOCK_LABEL[BLOCKS[R.b]])} ›</button></div>`;
+}
+function renderRoundDone(){
+  $app.innerHTML = `<div class="done stack"><div class="emoji">🎉</div><h1>Runde geschafft!</h1>
+    <p style="font-size:1.15rem">Toll gemacht, ${esc(nm())}. Für heute hast du genug getan – morgen geht es mit neuen Sachen weiter.</p>
+    <div style="margin-top:22px"><button class="btn huge" data-go="home">Fertig ›</button></div></div>`;
+}
+
 function lessonAfter(L){ const order = STAGES.filter(s => s.n > 0).flatMap(s => lessonsOf(s.n)); const i = order.indexOf(L); return order.slice(i+1).find(x => !state.done[x.id]) || nextLesson(); }
 
 /* ---------- Startseite: ein Ziel, ein Knopf ---------- */
 function renderHome(){
   if (pendingReload) return reloadForUpdate();
-  const {L, step} = current();
-  const steps = stepsOf(L); const si = steps.indexOf(step);
-  const order = STAGES.filter(s => s.n > 0).flatMap(s => lessonsOf(s.n));
-  const num = order.indexOf(L) + 1;
-  const started = si > 0;
+  const R = roundState(); const {L} = current();
+  const started = R.b > 0; const doneToday = R.last === todayKey() && !started;
   $app.innerHTML = `
     <div class="bar"><div class="spacer"></div><div class="title"></div><button class="iconbtn gear" data-go="settings" aria-label="Einstellungen und mehr">⚙︎</button></div>
     <div class="hello" style="margin-top:4px"><h1>${greeting()}, ${esc(nm())}!</h1>
-      <p class="muted">${started ? 'Schön, dass du wieder da bist. Hier geht es weiter:' : 'Deine heutige Lektion:'}</p></div>
-    <div class="todaycard">
-      <div class="ico">${L.icon}</div>
-      <div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em">Lektion ${num} von ${order.length}</div>
-      <h2>${esc(L.title)}</h2>
-      <div class="dots">${steps.map((s,i) => `<span class="${i < si ? 'past' : i === si ? 'now' : ''}"></span>`).join('')}</div>
-      <div class="muted">Schritt ${si+1} von ${steps.length}: <b>${STEP_NAMES[step]}</b></div>
+      <p class="muted">${started ? 'Schön, dass du wieder da bist. Hier geht es weiter:' : doneToday ? 'Heute hast du schon eine Runde geschafft. Lust auf noch eine?' : 'Deine Runde für heute – etwa 15 Minuten:'}</p></div>
+    <div class="todaycard" style="text-align:left">
+      <div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;text-align:center">Runde ${R.n}</div>
+      ${roundList(R)}
     </div>
     <button class="btn huge" data-act="continue">▶︎ ${started ? 'Weitermachen' : 'Los geht’s'}</button>
     ${installBanner() ? '<div style="height:18px"></div>' + installBanner() : ''}`;
@@ -832,6 +881,7 @@ function brainState(){
   if (!state.brain.v2){ state.brain.pairs = Math.max(6, state.brain.pairs); state.brain.v2 = 1; }
   return state.brain;
 }
+function gameForRound(){ return GAMES[(roundState().n - 1) % GAMES.length]; }
 function gameFor(L){ const order = STAGES.flatMap(s => lessonsOf(s.n)); return GAMES[Math.max(0, order.indexOf(L)) % GAMES.length]; }
 const catDe = c => BRAIN.cats[c].de;
 const tile = w => `<span class="pic">${w.pic}</span><span class="word">${esc(w.en)}</span>`;
@@ -843,7 +893,7 @@ function oddRound(){
 }
 
 function renderWarmup(){
-  const L = byId(view.id); const g = gameFor(L); brainState();
+  const L = byId(view.id); const g = gameForRound(); brainState();
   $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="home">⌂ Start</button><div class="title">🧠 Kopf-fit</div><div class="spacer"></div></div>
     <div class="hello" style="padding-top:0"><h2>${GAME_INFO[g].t}</h2><p class="muted" style="margin:.3rem 0 14px">${GAME_INFO[g].d}</p></div>
     <div id="game"></div><div id="gameEnd"></div>`;
@@ -852,7 +902,7 @@ function renderWarmup(){
     save();
     if (!document.getElementById('gameEnd') || !el.isConnected) return;
     document.getElementById('gameEnd').innerHTML = `<div class="card" style="text-align:center;margin-top:16px"><div style="font-size:2.2rem">🧠✨</div><p style="margin:.4rem 0 0;font-size:1.1rem">${msg}</p></div>
-      <div style="height:110px"></div><div class="stickynext"><div class="inner"><button class="btn huge" data-act="nextstep:warmup">Weiter zur Lektion ›</button></div></div>`;
+      <div style="height:110px"></div><div class="stickynext"><div class="inner"><button class="btn huge" data-act="nextstep:warmup">Weiter ›</button></div></div>`;
     document.getElementById('gameEnd').scrollIntoView({block:'end', behavior:'smooth'});
   };
   ({memory:gameMemory, list:gameList, story:gameStory, odd:gameOdd, sort:gameSort})[g](el, finish, L);
@@ -945,7 +995,7 @@ function gameList(el, finish){
 
 function gameStory(el, finish, L){
   const B = brainState(); const st = BRAIN.stories[B.storyN % BRAIN.stories.length];
-  state.story = {lesson: L.id, id: st.id}; B.storyN++; save();
+  state.story = {round: roundState().n, id: st.id}; B.storyN++; save();
   el.innerHTML = `<div class="card"><div class="muted small" style="font-weight:700">📖 ${esc(st.title)}</div>
       <div class="story" id="storyText">${st.s.map((x,i) => `<span data-s="${i}">${esc(x)}</span>`).join(' ')}</div>
       <div class="row" style="margin-top:14px"><button class="say primary" id="storyPlay">🔊 Nochmal anhören</button><button class="say" id="storySlow">🐢 Langsam</button></div></div>`;
@@ -1012,8 +1062,8 @@ function mkOdd(){
   return {type:'odd', key:'odd-' + R.odd.en, en:R.odd.en, de:`„${R.odd.en}“ (${R.odd.de}) gehört zu „${catDe(R.other)}“ – die anderen sind „${catDe(R.main)}“.`,
     answer: lab(R.odd), options: R.opts.map(lab)};
 }
-function storyQuestions(L){
-  if (!state.story || state.story.lesson !== L.id) return [];
+function storyQuestions(){
+  if (!state.story || state.story.round !== roundState().n) return [];
   const st = BRAIN.stories.find(s => s.id === state.story.id); if (!st) return [];
   return st.q.map((q,i) => ({type:'storyq', key:'story-' + st.id + i, title:st.title, q:q.q, en:q.o[q.a], answer:q.o[q.a], options:shuffle(q.o.slice())}));
 }
@@ -1045,7 +1095,7 @@ function buildLesson(L){
   (L.polite || []).forEach(p => ex.push(mk.polite(p)));
   ex.push(mk.recall(ph[5]));
   ex.splice(Math.floor(ex.length / 2), 0, mkOdd());
-  return ex.concat(storyQuestions(L));
+  return ex;
 }
 function buildReview(){
   const ls = LESSONS.filter(l => state.done[l.id]);
@@ -1060,12 +1110,36 @@ function buildReview(){
   return ex;
 }
 let run = null;
+function rotate(key, arr, n){
+  state.ptr = state.ptr || {}; const p = state.ptr[key] || 0; const out = [];
+  for (let i = 0; i < n; i++) out.push(arr[(p + i) % arr.length]);
+  state.ptr[key] = (p + n) % arr.length; save(); return out;
+}
+function buildBunt(){
+  const R = roundState(); const extra = [];
+  if (R.n % 2 === 0){
+    const st = rotate('stories', STORIES2, 1)[0];
+    extra.push({type:'story2', key:'st-' + st.id, st});
+    st.q.forEach((x,i) => extra.push({type:'storyq', key:'st-' + st.id + i, title:st.title, q:x.q, en:x.o[x.a], answer:x.o[x.a], options:x.o.slice()}));
+  } else {
+    rotate('jokes', JOKES, 2).forEach(j => extra.push({type:'joke', key:'j-' + j.s[0], s:j.s, en:j.s[j.s.length-1], de:j.de, answer:j.o[0], options:j.o.slice()}));
+    const id = rotate('idioms', IDIOMS, 1)[0];
+    extra.push({type:'idiom', key:'id-' + id.en, en:id.en, de:id.de, answer:id.de, options:[id.de, ...id.wrong]});
+  }
+  const hasRev = LESSONS.some(l => state.done[l.id]);
+  const scenes = rotate('scenes', SCENES, hasRev ? 3 : 4).map(x => ({type:'scene', key:'sc-' + x.q, ctx:x.ctx, q:x.q, qde:x.qde, en:x.a, de:x.ade, answer:x.a, options:[x.a, ...x.wrong]}));
+  const rev = hasRev ? buildReview().filter(e => e.type !== 'order').slice(0, 3) : [];
+  const q = [];
+  scenes.forEach((sc,i) => { q.push(sc); if (rev[i]) q.push(rev[i]); if (i === 1) q.push(...extra); });
+  return q.concat(storyQuestions());
+}
+function startBunt(){ const q = buildBunt(); run = {mode:'bunt', queue:q, i:0, firstTry:0, total:q.length, retried:new Set()}; go({name:'ex'}); }
 function startLesson(id){ const L = byId(id); const q = buildLesson(L); run = {mode:'lesson', id, queue:q, i:0, firstTry:0, total:q.length, retried:new Set()}; go({name:'ex', id}); }
 function startReview(){
   if (!LESSONS.some(l => state.done[l.id])){ toast('Mach zuerst eine Lektion – dann gibt es hier etwas zu wiederholen.'); return; }
   const q = buildReview(); run = {mode:'review', queue:q, i:0, firstTry:0, total:q.length, retried:new Set()}; go({name:'ex'});
 }
-const ASK = { odd:'🧠 Kopf-fit: Was passt nicht zu den anderen?', storyq:'🧠 Erinnerst du dich an die Geschichte vom Anfang?', meaning:'Was bedeutet dieser Satz?', listen:'Hör zu. Welchen Satz hörst du?', deen:'Wie sagt man das auf Englisch?',
+const ASK = { scene:'Was antwortest du?', idiom:'💬 Was bedeutet diese Redewendung?', joke:'Warum ist das lustig?', story2:'Hör dir die Geschichte an – danach kommen zwei Fragen.', odd:'🧠 Kopf-fit: Was passt nicht zu den anderen?', storyq:'📖 Eine Frage zur Geschichte:', meaning:'Was bedeutet dieser Satz?', listen:'Hör zu. Welchen Satz hörst du?', deen:'Wie sagt man das auf Englisch?',
   order:'Bring die Wörter in die richtige Reihenfolge.', gap:'Welches Wort fehlt?', reply:'Was antwortest du?', recall:'Kannst du es auf Englisch sagen? Sag es laut – dann „Lösung zeigen“.' };
 
 function renderEx(){
@@ -1084,6 +1158,13 @@ function renderEx(){
   }
   else if (e.type==='deen') body = `<div class="prompt"><div class="en">${esc(N(e.de))}</div></div>` + optsHtml();
   else if (e.type==='gap') body = `<div class="prompt"><div class="en">${glN(e.en).replace('___','<span class="gapword">?</span>')}</div><div class="de">${esc(N(e.de))}</div></div>` + optsHtml();
+  else if (e.type==='scene') body = `<div class="prompt"><div class="scene" style="margin:0 0 10px">📍 ${esc(e.ctx)}</div><div class="en">„${glN(e.q)}“</div><div class="de" hidden id="qde">${esc(e.qde)}</div><div class="row"><button class="say primary" data-say="${esc(e.q)}">🔊 Anhören</button><button class="say" data-act="showqde">🇩🇪 Übersetzung</button></div></div>` + optsHtml();
+  else if (e.type==='idiom') body = `<div class="prompt"><div class="en">${glN(e.en)}</div><div class="row"><button class="say primary" data-say="${esc(e.en)}">🔊 Anhören</button></div></div>` + optsHtml();
+  else if (e.type==='joke') body = `<div class="prompt"><div class="muted small" style="font-weight:700">😄 Ein englischer Witz</div>${e.s.map(x => `<div class="en" style="margin:6px 0">${gl(x)}</div>`).join('')}<div class="row"><button class="say primary" data-act="playjoke">🔊 Anhören</button></div></div>` + optsHtml();
+  else if (e.type==='story2') body = `<div class="card"><div class="muted small" style="font-weight:700">📖 ${esc(e.st.title)}</div>
+      <div class="story" id="storyText">${e.st.s.map((x,i) => `<span data-s="${i}">${gl(x)}</span>`).join(' ')}</div>
+      <div class="row" style="margin-top:14px"><button class="say primary" data-act="playstory">🔊 Nochmal anhören</button><button class="say" data-act="playstoryslow">🐢 Langsam</button></div></div>
+      <div style="height:110px"></div><div class="stickynext"><div class="inner"><button class="btn huge" data-act="storydone">Zu den Fragen ›</button></div></div>`;
   else if (e.type==='reply') body = `<div class="prompt"><div class="muted small" style="font-weight:700">Jemand sagt zu dir:</div><div class="en">„${glN(e.q)}“</div><div class="de" hidden id="qde">${esc(N(e.qde))}</div><div class="row"><button class="say primary" data-say="${esc(e.q)}" data-other="1">🔊 Anhören</button><button class="say" data-act="showqde">🇩🇪 Übersetzung</button></div></div>` + optsHtml();
   else if (e.type==='odd') body = optsHtml();
   else if (e.type==='storyq') body = `<div class="prompt"><div class="muted small" style="font-weight:700">📖 ${esc(e.title)}</div><div class="en">${gl(e.q)}</div></div>` + optsHtml();
@@ -1097,6 +1178,10 @@ function renderEx(){
   } else if (e.type==='recall') body = `<div class="prompt"><div class="en">${esc(N(e.de))}</div></div><div id="recallArea"><div class="${canCheckSpeech() ? 'two' : ''}">${canCheckSpeech() ? '<button class="btn secondary" id="recMic">🎙️ Sprechen</button>' : ''}<button class="btn" id="revealBtn">Lösung zeigen</button></div><div id="recRes"></div></div>`;
   $app.innerHTML = `<div class="bar"><button class="iconbtn" data-go="${back}" aria-label="Beenden">✕</button><div class="progress"><i style="width:${pct}%"></i></div></div>
     <div class="ask">${e.type==='polite' ? 'Welcher Satz passt?' : ASK[e.type]}</div>${body}`;
+  if (e.type==='scene') setTimeout(() => speak(e.q), 300);
+  if (e.type==='idiom') setTimeout(() => speak(e.en), 300);
+  if (e.type==='joke') setTimeout(() => playLines(e.s), 300);
+  if (e.type==='story2') setTimeout(() => playLines(e.st.s, false, true), 400);
   if (e.type==='listen') setTimeout(() => NATIVE[e.en] ? playUrl('audio/native/' + NATIVE[e.en].f) : speak(e.en), 250);
   if (e.type==='order') bindOrder(e);
   if (e.type==='recall'){
@@ -1166,7 +1251,7 @@ function answer(ok, e, o={}){
 function hideFb(){ const fb=document.getElementById('fb'); if (fb) fb.className='feedback'; }
 function next(){
   hideFb(); stopSpeech(); run.i++;
-  if (run.i >= run.queue.length){ if (run.mode==='lesson'){ state.done[run.id] = (state.done[run.id]||0)+1; const nx = lessonAfter(byId(run.id)); if (nx) setCur(nx.id, 'warmup'); else state.cur = null; save(); } return go({name:'done'}); }
+  if (run.i >= run.queue.length){ if (run.mode==='lesson' && freeMode){ state.done[run.id] = (state.done[run.id]||0)+1; save(); return go({name:'done'}); } if (run.mode==='lesson'){ state.done[run.id] = (state.done[run.id]||0)+1; const nx = lessonAfter(byId(run.id)); if (nx) setCur(nx.id, stepsOf(nx)[0]); else state.cur = null; save(); toast('Thema „' + byId(run.id).title + '“ geschafft! 🎉'); return roundNext(); } if (run.mode==='bunt') return roundNext(); return go({name:'done'}); }
   renderEx(); window.scrollTo(0,0);
 }
 
@@ -1347,17 +1432,21 @@ document.addEventListener('click', ev => {
   if (t.dataset.testaudio){ playTestAudio(t.dataset.testaudio); return; }
   if (t.dataset.testans !== undefined){ if (testAudio) try{testAudio.pause();}catch(e){} testRun.ans[testRun.i] = parseInt(t.dataset.testans); testRun.i++; renderTest(); window.scrollTo(0,0); return; }
   if (t.dataset.go){ const [n,id] = t.dataset.go.split(':'); if (n === 'chat' && view.name === 'chat') chat = null; go(id ? {name:n, id} : {name:n}); return; }
-  if (t.dataset.goTo){ const id = view.id; if (['phrases','play','tip','ex'].includes(t.dataset.goTo)) return enterStep(id, t.dataset.goTo); go({name:t.dataset.goTo, id}); return; }
+  if (t.dataset.goTo){ freeMode = true; const id = view.id; if (['phrases','play','tip','ex'].includes(t.dataset.goTo)) return enterStep(id, t.dataset.goTo); go({name:t.dataset.goTo, id}); return; }
   if (t.dataset.act){
     const [a,id] = t.dataset.act.split(':'); const L = view.id ? byId(view.id) : null;
     if (a==='open') go({name:'hub', id});
-    else if (a==='continue'){ const c = current(); enterStep(c.L.id, c.step); }
+    else if (a==='continue'){ startBlock(); }
     else if (a==='nextstep' && L) nextStep(L, id);
     else if (a==='wordnext' && L){ const k = view.k || 0; if (k < wordsOf(L).length - 1){ stopSpeech(); view = {name:'words', id:L.id, k:k+1}; render(); window.scrollTo(0,0); } else nextStep(L, 'words'); }
     else if (a==='phrasenext' && L){ const k = view.k || 0; if (k < L.phrases.length - 1){ stopSpeech(); if (Rec.active) Rec.stop(); view = {name:'phrases', id:L.id, k:k+1}; render(); window.scrollTo(0,0); } else nextStep(L, 'phrases'); }
     else if (a==='review') startReview();
     else if (a==='again') startLesson(run.id);
     else if (a==='basics'){ state.showBasics = true; save(); renderHome(); }
+    else if (a==='playjoke' && run){ playLines(run.queue[run.i].s); }
+    else if (a==='playstory' && run){ playLines(run.queue[run.i].st.s, false, true); }
+    else if (a==='playstoryslow' && run){ playLines(run.queue[run.i].st.s, true, true); }
+    else if (a==='storydone' && run){ stopSpeech(); next(); }
     else if (a==='showqde'){ const q = document.getElementById('qde'); if (q) q.hidden = false; }
     else if (a==='playrepeat' && L){ const last = play.shown[play.shown.length-1]; if (last !== undefined) speak(L.dialog[last].en, {other: L.dialog[last].who !== 'me'}); }
     else if (a==='playhelp' && L){ const last = play.shown[play.shown.length-1]; const d = last !== undefined ? L.dialog[last] : null; toast(d ? 'Gerade gesagt: „' + N(d.de) + '“' : 'Du beginnst das Gespräch: ' + L.scene); }

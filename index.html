@@ -247,6 +247,11 @@
 .sr-verdict.good{border-color:var(--accent);background:#e6f1ec}.sr-verdict.mid{border-color:#d9a400;background:#fbf3d9}.sr-verdict.low{border-color:var(--warm);background:#fbeae4}
 .sr-head{font-weight:800;font-size:1.15rem;margin-bottom:6px}
 html{touch-action:manipulation} body.boot #app{opacity:0} #app{transition:opacity .18s ease}
+.roundlist{display:flex;flex-direction:column;gap:10px;margin:14px 0 6px;text-align:left}
+.ri{display:flex;gap:14px;align-items:center;padding:12px 14px;border-radius:16px;background:var(--bg);font-size:1.05rem}
+.ri .ck{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--line);font-weight:800}
+.ri.past{opacity:.6}.ri.past .ck{background:var(--accent);color:#fff}
+.ri.now{background:var(--accent-soft);font-weight:700}.ri.now .ck{background:var(--sun)}
 </style>
 </head>
 <body class="boot">
