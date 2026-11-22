@@ -291,13 +291,31 @@ const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.p
 let installEvent = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvent = e; if (view.name==='home' && state.onboarded) render(); });
 window.addEventListener('appinstalled', () => { installEvent = null; state.installHidden = true; save(); toast('Fertig! Die App ist jetzt installiert.'); if (view.name==='home') render(); });
+/* Neue Version sofort übernehmen: Sobald der neue Service Worker die Kontrolle hat, lädt die App einmal neu –
+   auf dem Startbildschirm sofort, mitten in einer Übung erst beim nächsten Wechsel zum Startbildschirm. */
+let pendingReload = false;
+function reloadForUpdate(){ try { sessionStorage.setItem('englisch-upd', String(Date.now())); } catch(e){} location.reload(); }
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController){ hadController = true; return; }       // allererste Installation: nichts neu laden
+    let last = 0; try { last = +sessionStorage.getItem('englisch-upd') || 0; } catch(e){}
+    if (Date.now() - last < 30000) return;                       // nie in einer Schleife neu laden
+    if (view.name === 'home' || !state.onboarded) reloadForUpdate(); else pendingReload = true;
+  });
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js', {updateViaCache:'none'}).catch(()=>{});
+    navigator.serviceWorker.register('sw.js', {updateViaCache:'none'}).then(r => r.update && r.update()).catch(()=>{});
     navigator.serviceWorker.ready.then(r => { if (r.active) r.active.postMessage('warm'); }).catch(()=>{});
   });
 }
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e) {}
+(function bootReveal(){
+  const show = () => document.body.classList.remove('boot');
+  const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  let w = innerWidth, h = innerHeight, stable = 0;
+  const settle = () => new Promise(res => { const tick = () => { if (innerWidth === w && innerHeight === h) stable++; else { stable = 0; w = innerWidth; h = innerHeight; } stable >= 3 ? res() : requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+  Promise.race([Promise.all([fontsReady, settle()]), sleep(900)]).then(() => requestAnimationFrame(show));
+})();
 
 function installHow(){
   if (installEvent) return 'Mit einem Tipp legst du die App auf deinen Computer. Danach funktioniert sie auch ohne Internet.';
@@ -458,6 +476,7 @@ function lessonAfter(L){ const order = STAGES.filter(s => s.n > 0).flatMap(s => 
 
 /* ---------- Startseite: ein Ziel, ein Knopf ---------- */
 function renderHome(){
+  if (pendingReload) return reloadForUpdate();
   const {L, step} = current();
   const steps = stepsOf(L); const si = steps.indexOf(step);
   const order = STAGES.filter(s => s.n > 0).flatMap(s => lessonsOf(s.n));
@@ -1275,7 +1294,9 @@ function renderSettings(){
     <div class="card stack"><h3>Quellen & Lizenzen</h3><p class="muted small" style="margin:0">
       Echte Stimmen in den Hörübungen: Aufnahmen von Tatoeba-Sprechern (vor allem „CK“), <a href="https://tatoeba.org" target="_blank" rel="noopener">tatoeba.org</a>, Lizenz CC BY-NC-ND 3.0 – unverändert und nur nicht-kommerziell genutzt.
       Übrige Sprachausgabe: Kokoro (Apache 2.0). Schriften: Atkinson Hyperlegible und Fraunces (SIL Open Font License). Videos: jeweilige YouTube-Kanäle.</p></div>
-    <div class="card stack"><h3>Fortschritt</h3><div id="resetArea"><button class="btn secondary" id="resetBtn">Fortschritt zurücksetzen</button></div></div></div>`;
+    <div class="card stack"><h3>Fortschritt</h3><div id="resetArea"><button class="btn secondary" id="resetBtn">Fortschritt zurücksetzen</button></div></div>
+    <p class="muted small" id="verLine" style="text-align:center;margin:4px 0 0">Version …</p></div>`;
+  (window.caches ? caches.keys() : Promise.resolve([])).then(ks => { const k = ks.find(x => /^englisch-[0-9a-f]{8}$/.test(x)); const el = document.getElementById('verLine'); if (el) el.textContent = k ? 'Version ' + k.slice(9) : 'Version: nicht installiert'; }).catch(()=>{});
   const nameIn = document.getElementById('nameIn'); nameIn.onchange = nameIn.onblur = () => { state.name = nameIn.value.trim(); save(); };
   const srv = document.getElementById('srvIn'), code = document.getElementById('codeIn');
   if (srv) {

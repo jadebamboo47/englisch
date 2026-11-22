@@ -10,12 +10,15 @@
 <meta name="theme-color" content="#F7F3EC">
 <title>Englisch für unterwegs</title>
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/atkinson-hyperlegible-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/fraunces-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" type="image/png" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
-  @font-face{font-family:"Atkinson Hyperlegible";font-weight:400;font-style:normal;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-400-normal.woff2) format("woff2")}
-  @font-face{font-family:"Atkinson Hyperlegible";font-weight:700;font-style:normal;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-700-normal.woff2) format("woff2")}
-  @font-face{font-family:"Fraunces";font-weight:500 700;font-style:normal;font-display:swap;src:url(fonts/fraunces-latin-600-normal.woff2) format("woff2")}
+  @font-face{font-family:"Atkinson Hyperlegible";font-weight:400;font-style:normal;font-display:block;src:url(fonts/atkinson-hyperlegible-latin-400-normal.woff2) format("woff2")}
+  @font-face{font-family:"Atkinson Hyperlegible";font-weight:700;font-style:normal;font-display:block;src:url(fonts/atkinson-hyperlegible-latin-700-normal.woff2) format("woff2")}
+  @font-face{font-family:"Fraunces";font-weight:500 700;font-style:normal;font-display:block;src:url(fonts/fraunces-latin-600-normal.woff2) format("woff2")}
   :root{
     --bg:#F7F3EC; --card:#FFFFFF; --ink:#1E2638; --muted:#566074; --line:#E5DED1;
     --accent:#1F6F5C; --accent-ink:#FFFFFF; --accent-soft:#E2EFE9;
@@ -243,10 +246,12 @@
 .sr-verdict{margin-top:12px;border-radius:16px;padding:14px 16px;background:var(--card);border:3px solid var(--line,#e4ddd0)}
 .sr-verdict.good{border-color:var(--accent);background:#e6f1ec}.sr-verdict.mid{border-color:#d9a400;background:#fbf3d9}.sr-verdict.low{border-color:var(--warm);background:#fbeae4}
 .sr-head{font-weight:800;font-size:1.15rem;margin-bottom:6px}
+body.boot #app{opacity:0} #app{transition:opacity .18s ease}
 </style>
 </head>
-<body>
+<body class="boot">
 <div id="app"></div>
+<script>setTimeout(function(){document.body.classList.remove("boot")},1500)</script>
 <div class="feedback" id="fb"><div class="inner" id="fbInner"></div></div>
 <div class="toast" id="toast"></div>
 <script src="content.js"></script>
