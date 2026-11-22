@@ -509,7 +509,7 @@ function roundState(){ state.round = Object.assign({n:1, b:0}, state.round || {}
 function blockText(b){
   const {L, step} = current();
   if (b === 'neu') return `✨ Neues: ${L.title} – ${STEP_NAMES[step]}`;
-  if (b === 'bunt') return roundState().n % 2 ? '🎲 Bunt gemischt: Alltagsszenen und Wiederholung' : '🎲 Bunt gemischt: Alltagsszenen, eine Kurzgeschichte, Wiederholung';
+  if (b === 'bunt') return roundState().n % 2 ? '🎲 Bunt gemischt: Alltagsszenen, Redewendungen, Wiederholung' : '🎲 Bunt gemischt: Alltagsszenen, eine Kurzgeschichte, Wiederholung';
   return '🧠 Kopf-fit: ' + GAME_INFO[gameForRound()].t;
 }
 function startBlock(){
@@ -1122,9 +1122,11 @@ function buildBunt(){
     const st = rotate('stories', STORIES2, 1)[0];
     extra.push({type:'story2', key:'st-' + st.id, st});
     st.q.forEach((x,i) => extra.push({type:'storyq', key:'st-' + st.id + i, title:st.title, q:x.q, en:x.o[x.a], answer:x.o[x.a], options:x.o.slice()}));
+  } else {
+    rotate('idioms', IDIOMS, 2).forEach(id => extra.push({type:'idiom', key:'id-' + id.en, en:id.en, de:id.de, answer:id.de, options:[id.de, ...id.wrong]}));
   }
   const hasRev = LESSONS.some(l => state.done[l.id]);
-  const scenes = rotate('scenes', SCENES, (hasRev ? 3 : 4) + (withStory ? 0 : 2)).map(x => ({type:'scene', key:'sc-' + x.q, ctx:x.ctx, q:x.q, qde:x.qde, en:x.a, de:x.ade, answer:x.a, options:[x.a, ...x.wrong]}));
+  const scenes = rotate('scenes', SCENES, (hasRev ? 3 : 4) + (withStory ? 0 : 1)).map(x => ({type:'scene', key:'sc-' + x.q, ctx:x.ctx, q:x.q, qde:x.qde, en:x.a, de:x.ade, answer:x.a, options:[x.a, ...x.wrong]}));
   const rev = hasRev ? buildReview().filter(e => e.type !== 'order').slice(0, 3) : [];
   const q = [];
   scenes.forEach((sc,i) => { q.push(sc); if (rev[i]) q.push(rev[i]); if (i === 1) q.push(...extra); });

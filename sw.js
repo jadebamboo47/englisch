@@ -1,5 +1,5 @@
 /* Offline-Speicher für „Englisch für unterwegs“ – automatisch erzeugt von tools/build_sw.py */
-const VERSION = '734883d8';
+const VERSION = '04fdd28b';
 const CACHE = 'englisch-' + VERSION;
 const ASSETS = [
   './',
