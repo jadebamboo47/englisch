@@ -219,7 +219,8 @@ function displayWords(target){
 /* ============================================================
    SERVER (KI-Gesprächspartner, optional)
    ============================================================ */
-function serverReady(){ return !!(state.server && state.code && navigator.onLine); }
+const KI_ENABLED = false;   // KI-Gesprächspartner vorerst ausgeschaltet (kein Server). Auf true setzen, um ihn wieder einzublenden.
+function serverReady(){ return KI_ENABLED && !!(state.server && state.code && navigator.onLine); }
 function apiUrl(p){ let s = state.server.trim().replace(/\/+$/,''); if (!/^https?:\/\//.test(s)) s = 'https://' + s; return s + p; }
 async function api(path, opts={}){
   const headers = Object.assign({'X-Access-Code': state.code}, opts.json ? {'Content-Type':'application/json'} : {});
@@ -251,7 +252,7 @@ function render(){
   hideGloss();
   if (!state.onboarded) return renderWelcome();
   ({warmup:renderWarmup, all:renderAll, test:renderTest, testreview:renderTestReview, home:renderHome, hub:renderHub, words:renderWords, phrases:renderPhrases, play:renderPlay,
-    tip:renderTip, video:renderVideo, ex:renderEx, done:renderDone, settings:renderSettings, chat:renderChat}[view.name] || renderHome)();
+    tip:renderTip, video:renderVideo, ex:renderEx, done:renderDone, settings:renderSettings, chat:KI_ENABLED ? renderChat : renderHome}[view.name] || renderHome)();
 }
 
 /* ---------- Willkommen ---------- */
@@ -1196,7 +1197,7 @@ function renderSettings(){
     <div class="card stack"><h3>Mehr</h3>
       <button class="lesson" data-go="all"><div class="ico">📚</div><div class="txt"><b>Alle Lektionen</b><span>Lektionen frei auswählen, Videos</span></div></button>
       <button class="lesson" data-act="review"><div class="ico">🧠</div><div class="txt"><b>Kopftraining</b><span>Gelerntes gemischt wiederholen</span></div></button>
-      <button class="lesson" data-act="chatopen"><div class="ico">🗣️</div><div class="txt"><b>Mit der KI sprechen</b><span>${state.server && state.code ? 'Freies Gespräch mit Korrekturen' : 'Noch einzurichten (siehe unten)'}</span></div></button>
+      ${KI_ENABLED ? `<button class="lesson" data-act="chatopen"><div class="ico">🗣️</div><div class="txt"><b>Mit der KI sprechen</b><span>${state.server && state.code ? 'Freies Gespräch mit Korrekturen' : 'Noch einzurichten (siehe unten)'}</span></div></button>` : ''}
       <button class="lesson" data-act="testopen"><div class="ico">🎯</div><div class="txt"><b>Einstufungstest</b><span>${state.placement ? 'Letztes Ergebnis: ' + esc(state.placement.level) : '24 Fragen · 10 Min.'}</span></div></button>
     </div>
     <div class="card stack"><label class="field" for="nameIn">Dein Vorname</label><input id="nameIn" class="text" type="text" value="${esc(state.name)}" placeholder="z. B. Maria"></div>
@@ -1205,12 +1206,12 @@ function renderSettings(){
     <div class="card stack"><h3>Stimme</h3>${seg('voice',[['rec','Aufnahmen (empfohlen)'],['device','Gerätestimme']])}
       <button class="btn secondary" data-say="Good afternoon. How can I help you?">🔊 Stimme testen</button></div>
     <div class="card stack"><h3>Übersetzungen im Gespräch</h3>${seg('showDe',[[false,'Erst beim Antippen'],[true,'Immer zeigen']])}</div>
-    <div class="card stack"><h3>🗣️ KI-Gesprächspartner</h3>
+    ${KI_ENABLED ? `<div class="card stack"><h3>🗣️ KI-Gesprächspartner</h3>
       <label class="field" for="srvIn">Server-Adresse</label><input id="srvIn" class="text" type="url" autocapitalize="off" autocorrect="off" placeholder="z. B. 85-215-1-2.sslip.io" value="${esc(state.server)}">
       <label class="field" for="codeIn">Zugangscode</label><input id="codeIn" class="text" type="text" autocapitalize="characters" autocorrect="off" value="${esc(state.code)}">
-      <button class="btn secondary" id="srvTest">Verbindung testen</button><div id="srvRes" class="muted small"></div></div>
+      <button class="btn secondary" id="srvTest">Verbindung testen</button><div id="srvRes" class="muted small"></div></div>` : ''}
     <div class="card stack"><h3>App & Offline</h3>
-      <p style="margin:0">${isStandalone() ? '✓ Die App ist installiert. Lektionen funktionieren ohne Internet; Sprechprüfung und KI-Gespräch brauchen Internet.' : installHow()}</p>
+      <p style="margin:0">${isStandalone() ? '✓ Die App ist installiert. Lektionen funktionieren ohne Internet; nur die Sprechprüfung und Videos brauchen Internet.' : installHow()}</p>
       ${!isStandalone() && installEvent ? '<button class="btn" data-act="install">Jetzt installieren</button>' : ''}
       <p class="muted small" style="margin:0">Dein Lernstand wird nur auf diesem Gerät gespeichert.</p></div>
     <div class="card stack"><h3>Quellen & Lizenzen</h3><p class="muted small" style="margin:0">
@@ -1219,6 +1220,7 @@ function renderSettings(){
     <div class="card stack"><h3>Fortschritt</h3><div id="resetArea"><button class="btn secondary" id="resetBtn">Fortschritt zurücksetzen</button></div></div></div>`;
   const nameIn = document.getElementById('nameIn'); nameIn.onchange = nameIn.onblur = () => { state.name = nameIn.value.trim(); save(); };
   const srv = document.getElementById('srvIn'), code = document.getElementById('codeIn');
+  if (srv) {
   const keep = () => { state.server = srv.value.trim(); state.code = code.value.trim().toUpperCase(); save(); };
   srv.onchange = srv.onblur = keep; code.onchange = code.onblur = keep;
   document.getElementById('srvTest').onclick = async () => {
@@ -1230,6 +1232,7 @@ function renderSettings(){
       serverSpeak('Hello! The connection works.', 'emma');
     } catch(e){ out.innerHTML = '<span style="color:var(--warm);font-weight:700">✗ ' + esc(e.message === 'Failed to fetch' ? 'Server nicht erreichbar' : e.message) + '</span>'; }
   };
+  }
   $app.querySelectorAll('[data-set]').forEach(b => b.onclick = () => {
     const k=b.dataset.set, v=b.dataset.v; state[k] = (k==='voice') ? v : (k==='showDe') ? v==='true' : parseFloat(v); save(); applyScale(); renderSettings();
   });
@@ -1269,7 +1272,7 @@ document.addEventListener('click', ev => {
     else if (a==='playhelp' && L){ const last = play.shown[play.shown.length-1]; const d = last !== undefined ? L.dialog[last] : null; toast(d ? 'Gerade gesagt: „' + N(d.de) + '“' : 'Du beginnst das Gespräch: ' + L.scene); }
     else if (a==='playall' && L) playAll(L);
     else if (a==='playagain'){ play = null; renderPlay(); }
-    else if (a==='chatopen'){ chat = null; go({name:'chat'}); }
+    else if (a==='chatopen' && KI_ENABLED){ chat = null; go({name:'chat'}); }
     else if (a==='chatend'){ chat = null; renderChat(); }
     else if (a==='teststart'){ startTest(); }
     else if (a==='testopen'){ testRun = null; go({name:'test'}); }
